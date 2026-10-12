@@ -8,7 +8,7 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 
 ## Features
 
-- **Instant Toggle via Global Shortcut**: Summon or dismiss the selector anytime from anywhere with a customizable hotkey (default: `Ctrl + Shift + W`).
+- **Instant Toggle via Global Shortcut**: Summon or dismiss the selector anytime from anywhere with a customizable hotkey (default: `Win + J`).
 - **Linux Rice Aesthetic (Hyprland / Quickshell Style)**: Fully transparent frameless overlay spanning 100% screen width and 70% height, centered vertically.
 - **3D Perspective Carousel**: Smooth 3D coverflow carousel with depth, perspective rotation, and interactive navigation (mouse wheel, keyboard arrows, or clicking).
 - **Vertical 9:16 Wallpapers**: Displays vertical cards with center-cropped thumbnails so more wallpapers fit across your screen simultaneously.
@@ -20,7 +20,7 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 
 ## How It Works
 
-1. **Summon**: Press your shortcut (default `Ctrl + Shift + W`) or left-click the tray icon. The selector smoothly appears on top of your windows.
+1. **Summon**: Press your shortcut (default `Win + J`) or left-click the tray icon. The selector smoothly appears on top of your windows.
 2. **Browse**:
    - Scroll horizontally or vertically with your **mouse wheel**.
    - Navigate using **`Left Arrow` (`←`)** and **`Right Arrow` (`→`)**.
@@ -44,9 +44,11 @@ Easy Paper saves its configuration in a simple `config.json` file on your machin
 
 ### Configuration Structure
 
+<!-- The "super" shortcut means Windows key -->
+
 ```json
 {
-  "shortcut": "ctrl+shift+w",
+  "shortcut": "super+j",
   "images_path": "C:\\Users\\your_user\\Pictures\\Wallpapers"
 }
 ```
@@ -55,7 +57,7 @@ Easy Paper saves its configuration in a simple `config.json` file on your machin
 
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `shortcut` | `string` | `"ctrl+shift+w"` | Global hotkey combination to toggle the window (e.g. `alt+space`, `ctrl+shift+p`, `super+w`). |
+| `shortcut` | `string` | `"super+j"` | Global hotkey combination to toggle the window (e.g. `alt+space`, `ctrl+shift+p`, `super+w`). |
 | `images_path` | `string` | App data `images` directory | Absolute path to the folder containing your wallpapers (`.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp`). |
 
 > **Tip**: After editing `config.json`, right-click the tray icon and select **"Recarregar Atalho" (Reload Shortcut)** to apply changes immediately without restarting the application.

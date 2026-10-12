@@ -12,7 +12,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
-            shortcut: "ctrl+alt+w".to_string(),
+            shortcut: "super+j".to_string(),
             images_path: String::new(),
         }
     }
