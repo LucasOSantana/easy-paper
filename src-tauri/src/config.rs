@@ -21,9 +21,15 @@ impl Default for AppConfig {
 pub fn get_default_images_dir<R: tauri::Runtime>(app: &impl Manager<R>) -> PathBuf {
     let dir = app
         .path()
-        .app_data_dir()
-        .unwrap_or_else(|_| PathBuf::from("."))
-        .join("images");
+        .picture_dir()
+        .unwrap_or_else(|_| {
+            if let Ok(user_profile) = std::env::var("USERPROFILE") {
+                PathBuf::from(user_profile).join("Pictures")
+            } else {
+                PathBuf::from(".")
+            }
+        })
+        .join("Easy paper");
     let _ = fs::create_dir_all(&dir);
     dir
 }

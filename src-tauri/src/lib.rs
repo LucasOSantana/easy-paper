@@ -47,6 +47,29 @@ fn hide_window(app: tauri::AppHandle) {
     }
 }
 
+fn open_images_folder<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    let folder = {
+        if let Some(state) = app.try_state::<ConfigState>() {
+            let st = state.0.lock().unwrap();
+            if st.images_path.trim().is_empty() {
+                config::get_default_images_dir(app)
+            } else {
+                let p = PathBuf::from(st.images_path.trim());
+                if !p.exists() {
+                    let _ = std::fs::create_dir_all(&p);
+                }
+                p
+            }
+        } else {
+            config::get_default_images_dir(app)
+        }
+    };
+
+    let _ = std::process::Command::new("explorer.exe")
+        .arg(&folder)
+        .spawn();
+}
+
 fn open_config_file<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     if let Ok(config_path) = config::get_config_path(app) {
         if !config_path.exists() {
@@ -55,15 +78,23 @@ fn open_config_file<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         }
 
         let path_str = config_path.to_string_lossy().to_string();
-        let opened = app.opener().open_path(&path_str, None::<&str>);
 
-        if opened.is_err() {
-            #[cfg(target_os = "windows")]
-            {
+        #[cfg(target_os = "windows")]
+        {
+            let res = std::process::Command::new("cmd")
+                .args(["/c", "start", "", &path_str])
+                .spawn();
+
+            if res.is_err() {
                 let _ = std::process::Command::new("notepad.exe")
                     .arg(&config_path)
                     .spawn();
             }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            let _ = app.opener().open_path(&path_str, None::<&str>);
         }
     }
 }
@@ -130,9 +161,30 @@ fn toggle_main_window(app: &tauri::AppHandle) {
     }
 }
 
+#[cfg(target_os = "windows")]
+fn enable_autostart() {
+    if let Ok(exe_path) = std::env::current_exe() {
+        let exe_str = exe_path.to_string_lossy().to_string();
+        let _ = std::process::Command::new("reg")
+            .args([
+                "add",
+                r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run",
+                "/v",
+                "easy-paper",
+                "/t",
+                "REG_SZ",
+                "/d",
+                &format!("\"{}\"", exe_str),
+                "/f",
+            ])
+            .spawn();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .manage(ShownAt(Mutex::new(Instant::now())))
         .setup(|app| {
             let app_config = load_config(app);
@@ -143,13 +195,18 @@ pub fn run() {
                 resize_and_center_window(&window);
             }
 
+            #[cfg(target_os = "windows")]
+            enable_autostart();
+
             #[cfg(desktop)]
             {
+                let add_pictures_item = tauri::menu::MenuItem::with_id(app, "add_pictures", "Add pictures", true, None::<&str>)?;
                 let settings_item = tauri::menu::MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
                 let reload_item = tauri::menu::MenuItem::with_id(app, "reload", "Reload Shortcut", true, None::<&str>)?;
                 let quit_item = tauri::menu::MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
                 let menu = tauri::menu::MenuBuilder::new(app)
+                    .item(&add_pictures_item)
                     .item(&settings_item)
                     .item(&reload_item)
                     .separator()
@@ -162,6 +219,9 @@ pub fn run() {
                     .tooltip("Easy Paper")
                     .on_menu_event(|app, event| {
                         match event.id.as_ref() {
+                            "add_pictures" => {
+                                open_images_folder(app);
+                            }
                             "settings" => {
                                 open_config_file(app);
                             }
