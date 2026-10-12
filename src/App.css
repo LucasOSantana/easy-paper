@@ -1,0 +1,166 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+}
+
+.carousel-container {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  overflow: hidden;
+}
+
+.carousel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ffffff;
+  font-size: 1rem;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.carousel-stage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.carousel-track {
+  position: relative;
+  width: 200px;
+  height: 355px;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-card {
+  position: absolute;
+  width: 200px;
+  height: 355px;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transform-origin: center center;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease, filter 0.45s ease, box-shadow 0.45s ease;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  will-change: transform, opacity;
+}
+
+.carousel-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.carousel-card.active {
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 28px rgba(255, 255, 255, 0.2);
+}
+
+.carousel-card.applying {
+  animation: apply-pop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  border: 2px solid #60a5fa !important;
+  box-shadow: 0 0 45px rgba(96, 165, 250, 0.85), 0 0 90px rgba(59, 130, 246, 0.5), 0 24px 60px rgba(0, 0, 0, 0.85) !important;
+  z-index: 200 !important;
+}
+
+.carousel-card:hover:not(.active):not(.applying) {
+  opacity: 0.95 !important;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.applied-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(1.5px);
+  border-radius: 14px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ripple-wave {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  animation: ripple-expand 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.applied-check {
+  font-size: 2.2rem;
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
+  animation: check-scale 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes apply-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes ripple-expand {
+  0% {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4.5);
+    opacity: 0;
+  }
+}
+
+@keyframes check-scale {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
