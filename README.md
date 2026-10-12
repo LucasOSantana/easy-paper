@@ -35,7 +35,7 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 Easy Paper saves its configuration in a simple `config.json` file on your machine.
 
 ### Accessing Configuration
-- **Quickest way**: Right-click the Easy Paper icon in the system tray and select **"Configurações" (Settings)**. The configuration file will automatically open in your default text editor (or Notepad).
+- **Quickest way**: Right-click the Easy Paper icon in the system tray and select **"Settings"**. The configuration file will automatically open in your default text editor (or Notepad).
 - **File location**:
   ```text
   %AppData%\easy-paper\config.json
@@ -60,7 +60,7 @@ Easy Paper saves its configuration in a simple `config.json` file on your machin
 | `shortcut` | `string` | `"super+j"` | Global hotkey combination to toggle the window (e.g. `alt+space`, `ctrl+shift+p`, `super+w`). |
 | `images_path` | `string` | App data `images` directory | Absolute path to the folder containing your wallpapers (`.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp`). |
 
-> **Tip**: After editing `config.json`, right-click the tray icon and select **"Recarregar Atalho" (Reload Shortcut)** to apply changes immediately without restarting the application.
+> **Tip**: After editing `config.json`, right-click the tray icon and select **"Reload Shortcut"** to apply changes immediately without restarting the application.
 
 ---
 
