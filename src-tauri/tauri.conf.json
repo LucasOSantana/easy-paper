@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "easy-paper",
+  "productName": "Easy Paper",
   "version": "0.1.0",
   "identifier": "easy-paper",
   "build": {

@@ -2,7 +2,7 @@ use base64::Engine;
 use image::imageops::FilterType;
 use serde::Serialize;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ImageItem {

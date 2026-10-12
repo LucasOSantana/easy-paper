@@ -11,7 +11,6 @@ use config::{load_config, save_config, AppConfig};
 use images::{get_images_from_folder, ImageItem};
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
-use tauri_plugin_opener::OpenerExt;
 use wallpaper::set_desktop_wallpaper;
 
 pub struct ConfigState(pub Mutex<AppConfig>);
