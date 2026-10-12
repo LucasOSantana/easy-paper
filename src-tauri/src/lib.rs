@@ -35,8 +35,17 @@ fn get_images(app: tauri::AppHandle, config_state: tauri::State<ConfigState>) ->
 }
 
 #[tauri::command]
-fn set_wallpaper(path: String) -> Result<(), String> {
-    set_desktop_wallpaper(&path)
+fn set_wallpaper(window: tauri::WebviewWindow, path: String) -> Result<(), String> {
+    let target_point = if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
+        Some((
+            pos.x + (size.width as i32) / 2,
+            pos.y + (size.height as i32) / 2,
+        ))
+    } else {
+        None
+    };
+
+    set_desktop_wallpaper(&path, target_point).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -113,23 +122,67 @@ fn reload_shortcut_from_config<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     }
 }
 
+#[cfg(target_os = "windows")]
+fn get_cursor_position() -> Option<(i32, i32)> {
+    #[repr(C)]
+    struct POINT {
+        x: i32,
+        y: i32,
+    }
+
+    unsafe extern "system" {
+        fn GetCursorPos(lpPoint: *mut POINT) -> i32;
+    }
+
+    let mut pt = POINT { x: 0, y: 0 };
+    let res = unsafe { GetCursorPos(&mut pt) };
+    if res != 0 {
+        Some((pt.x, pt.y))
+    } else {
+        None
+    }
+}
+
 fn resize_and_center_window(window: &tauri::WebviewWindow) {
-    let monitor = window
-        .current_monitor()
-        .ok()
-        .flatten()
+    let monitors = window.available_monitors().unwrap_or_default();
+
+    #[cfg(target_os = "windows")]
+    let cursor_pos = get_cursor_position();
+    #[cfg(not(target_os = "windows"))]
+    let cursor_pos: Option<(i32, i32)> = None;
+
+    let target_monitor = if let Some((cx, cy)) = cursor_pos {
+        monitors.into_iter().find(|m| {
+            let pos = m.position();
+            let size = m.size();
+            cx >= pos.x
+                && cx < pos.x + (size.width as i32)
+                && cy >= pos.y
+                && cy < pos.y + (size.height as i32)
+        })
+    } else {
+        None
+    };
+
+    let monitor = target_monitor
+        .or_else(|| window.current_monitor().ok().flatten())
         .or_else(|| window.primary_monitor().ok().flatten());
 
     if let Some(mon) = monitor {
         let size = mon.size();
+        let mon_pos = mon.position();
         let mon_w = size.width as f64;
         let mon_h = size.height as f64;
 
         let win_w = mon_w;
         let win_h = mon_h * 0.70;
-        let pos_x = 0.0;
-        let pos_y = (mon_h - win_h) / 2.0;
+        let pos_x = mon_pos.x as f64;
+        let pos_y = (mon_pos.y as f64) + (mon_h - win_h) / 2.0;
 
+        let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: pos_x as i32,
+            y: pos_y as i32,
+        }));
         let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
             width: win_w as u32,
             height: win_h as u32,

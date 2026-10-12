@@ -105,10 +105,10 @@ export default function App() {
   return (
     <div className="carousel-container" onWheel={handleWheel}>
       {loading && images.length === 0 ? (
-        <div className="carousel-empty">Carregando imagens...</div>
+        <div className="carousel-empty">Loading images...</div>
       ) : images.length === 0 ? (
         <div className="carousel-empty">
-          <p>Nenhuma imagem encontrada na pasta configurada.</p>
+          <p>No images found in the configured folder.</p>
         </div>
       ) : (
         <div className="carousel-stage">
