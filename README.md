@@ -12,20 +12,21 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 - **Linux Rice Aesthetic (Hyprland / Quickshell Style)**: Fully transparent frameless overlay spanning 100% screen width and 70% height, centered vertically.
 - **3D Perspective Carousel**: Smooth 3D coverflow carousel with depth, perspective rotation, and interactive navigation (mouse wheel, keyboard arrows, or clicking).
 - **Vertical 9:16 Wallpapers**: Displays vertical cards with center-cropped thumbnails so more wallpapers fit across your screen simultaneously.
+- **Multi-Monitor & Per-Monitor Support**: Automatically summons on the monitor where your cursor is currently located, applying the selected wallpaper exclusively to that monitor without altering other displays.
 - **High-Performance Thumbnail Caching**: Automatically creates and caches sharp 450x800 Lanczos-filtered thumbnails in a local `.cache/thumbnails` folder, keeping resource usage minimal even with large 4K/8K wallpaper collections.
-- **One-Click Native Wallpaper Switching**: Immediately updates your desktop background using native Windows APIs (`SystemParametersInfoW`) with an animated ripple and pulse feedback.
+- **One-Click Native Wallpaper Switching**: Seamlessly updates your desktop background using Windows Shell COM APIs (`IDesktopWallpaper`) with automatic fallback to `SystemParametersInfoW`, accompanied by animated ripple and pulse feedback.
 - **System Tray Integration**: Resides discreetly in the Windows system tray / notification area with options to open configuration, reload shortcuts, or quit.
 
 ---
 
 ## How It Works
 
-1. **Summon**: Press your shortcut (default `Win + J`) or left-click the tray icon. The selector smoothly appears on top of your windows.
+1. **Summon**: Press your shortcut (default `Win + J`) or left-click the tray icon. The selector smoothly appears on top of your windows on the monitor where your cursor is positioned.
 2. **Browse**:
    - Scroll horizontally or vertically with your **mouse wheel**.
    - Navigate using **`Left Arrow` (`←`)** and **`Right Arrow` (`→`)**.
    - Click directly on any visible side card to focus it.
-3. **Apply**: Click the active card or press `Enter` / `Space`. A pulse ripple animation triggers, your Windows wallpaper changes instantly, and the selector dismisses itself.
+3. **Apply**: Click the active card or press `Enter` / `Space`. A pulse ripple animation triggers, your Windows wallpaper changes instantly on that monitor, and the selector dismisses itself.
 4. **Dismiss**: Click outside the window or press the global shortcut again to hide it at any time.
 
 ---
@@ -101,6 +102,6 @@ Easy Paper saves its configuration in a simple `config.json` file on your machin
 ## Tech Stack
 
 - **Framework**: [Tauri v2](https://v2.tauri.app/)
-- **Backend**: Rust (Win32 API integration, `image` crate with Lanczos3 filtering, global hotkeys, system tray)
+- **Backend**: Rust (Windows Shell `IDesktopWallpaper` COM API & Win32 API, multi-monitor cursor tracking, `image` crate with Lanczos3 filtering, global hotkeys, system tray)
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Pure CSS 3D transforms (`perspective`, `transform-style: preserve-3d`)
