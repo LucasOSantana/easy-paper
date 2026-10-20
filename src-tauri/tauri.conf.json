@@ -21,6 +21,19 @@
         "shadow": false,
         "skipTaskbar": true,
         "visible": false
+      },
+      {
+        "label": "settings",
+        "title": "Easy Paper Settings",
+        "width": 860,
+        "height": 580,
+        "resizable": true,
+        "transparent": false,
+        "decorations": true,
+        "shadow": true,
+        "center": true,
+        "visible": false,
+        "skipTaskbar": false
       }
     ],
     "security": {

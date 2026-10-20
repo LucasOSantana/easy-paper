@@ -1,25 +1,10 @@
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
+use crate::models::AppConfig;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppConfig {
-    pub shortcut: String,
-    pub images_path: String,
-}
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            shortcut: "super+j".to_string(),
-            images_path: String::new(),
-        }
-    }
-}
-
-pub fn get_default_images_dir<R: tauri::Runtime>(app: &impl Manager<R>) -> PathBuf {
-    let dir = app
+pub fn get_default_images_directory<R: tauri::Runtime>(app: &impl Manager<R>) -> PathBuf {
+    let directory = app
         .path()
         .picture_dir()
         .unwrap_or_else(|_| {
@@ -30,24 +15,27 @@ pub fn get_default_images_dir<R: tauri::Runtime>(app: &impl Manager<R>) -> PathB
             }
         })
         .join("Easy paper");
-    let _ = fs::create_dir_all(&dir);
-    dir
+
+    let _ = fs::create_dir_all(&directory);
+    directory
 }
 
 pub fn get_config_path<R: tauri::Runtime>(app: &impl Manager<R>) -> Result<PathBuf, String> {
-    let dir = app
+    let directory = app
         .path()
         .app_config_dir()
-        .map_err(|e| format!("Error obtaining config directory: {}", e))?;
-    if !dir.exists() {
-        fs::create_dir_all(&dir)
-            .map_err(|e| format!("Error creating config directory: {}", e))?;
+        .map_err(|e| format!("Failed to obtain application configuration directory: {}", e))?;
+
+    if !directory.exists() {
+        fs::create_dir_all(&directory)
+            .map_err(|e| format!("Failed to create configuration directory: {}", e))?;
     }
-    Ok(dir.join("config.json"))
+
+    Ok(directory.join("config.json"))
 }
 
 pub fn load_config<R: tauri::Runtime>(app: &impl Manager<R>) -> AppConfig {
-    let default_images_dir = get_default_images_dir(app);
+    let default_images_dir = get_default_images_directory(app);
     let default_images_str = default_images_dir.to_string_lossy().to_string();
 
     if let Ok(path) = get_config_path(app) {
@@ -80,7 +68,10 @@ pub fn save_config<R: tauri::Runtime>(
 ) -> Result<(), String> {
     let path = get_config_path(app)?;
     let json = serde_json::to_string_pretty(config)
-        .map_err(|e| format!("Error serializing configuration: {}", e))?;
-    fs::write(path, json).map_err(|e| format!("Error writing configuration file: {}", e))?;
+        .map_err(|e| format!("Failed to serialize application configuration: {}", e))?;
+
+    fs::write(path, json)
+        .map_err(|e| format!("Failed to write configuration file to disk: {}", e))?;
+
     Ok(())
 }

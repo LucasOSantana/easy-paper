@@ -20,6 +20,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "bmp"] }
 base64 = "0.22"
+rfd = "0.17.2"
 
 [profile.release]
 codegen-units = 1

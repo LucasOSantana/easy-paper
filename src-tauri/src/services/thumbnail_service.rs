@@ -1,24 +1,17 @@
+use std::fs;
+use std::path::Path;
 use base64::Engine;
 use image::imageops::FilterType;
-use serde::Serialize;
-use std::fs;
-use std::path::{Path};
+use crate::models::WallpaperImageItem;
 
-#[derive(Debug, Clone, Serialize)]
-pub struct ImageItem {
-    pub name: String,
-    pub path: String,
-    pub thumbnail: String,
-}
-
-fn is_supported_image(path: &Path) -> bool {
+fn is_supported_image_extension(path: &Path) -> bool {
     match path.extension().and_then(|s| s.to_str()).map(|s| s.to_lowercase()) {
         Some(ext) => matches!(ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "bmp"),
         None => false,
     }
 }
 
-pub fn get_images_from_folder(folder_path: &Path) -> Vec<ImageItem> {
+pub fn get_wallpaper_images_from_folder(folder_path: &Path) -> Vec<WallpaperImageItem> {
     if !folder_path.exists() || !folder_path.is_dir() {
         return Vec::new();
     }
@@ -27,7 +20,7 @@ pub fn get_images_from_folder(folder_path: &Path) -> Vec<ImageItem> {
     let _ = fs::create_dir_all(&cache_dir);
 
     let entries = match fs::read_dir(folder_path) {
-        Ok(e) => e,
+        Ok(dir_entries) => dir_entries,
         Err(_) => return Vec::new(),
     };
 
@@ -35,9 +28,9 @@ pub fn get_images_from_folder(folder_path: &Path) -> Vec<ImageItem> {
 
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_file() && is_supported_image(&path) {
+        if path.is_file() && is_supported_image_extension(&path) {
             let file_name = match path.file_name().and_then(|s| s.to_str()) {
-                Some(n) => n.to_string(),
+                Some(name) => name.to_string(),
                 None => continue,
             };
 
@@ -86,7 +79,7 @@ pub fn get_images_from_folder(folder_path: &Path) -> Vec<ImageItem> {
             if thumb_path.exists() {
                 if let Ok(bytes) = fs::read(&thumb_path) {
                     let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
-                    items.push(ImageItem {
+                    items.push(WallpaperImageItem {
                         name: file_name,
                         path: path.to_string_lossy().to_string(),
                         thumbnail: format!("data:image/jpeg;base64,{}", encoded),

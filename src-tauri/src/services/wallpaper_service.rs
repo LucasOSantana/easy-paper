@@ -2,37 +2,37 @@ use std::fmt;
 use std::path::Path;
 
 #[derive(Debug)]
-pub enum WallpaperError {
+pub enum WallpaperServiceError {
     FileNotFound,
-    Unsupported,
+    UnsupportedPlatform,
     #[cfg(target_os = "windows")]
     Windows(windows::core::Error),
 }
 
-impl fmt::Display for WallpaperError {
+impl fmt::Display for WallpaperServiceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::FileNotFound => write!(f, "File not found"),
-            Self::Unsupported => write!(f, "Setting the wallpaper is not supported on this platform"),
+            Self::FileNotFound => write!(f, "Specified wallpaper image was not found"),
+            Self::UnsupportedPlatform => write!(f, "Setting desktop wallpaper is unsupported on this operating system"),
             #[cfg(target_os = "windows")]
-            Self::Windows(e) => write!(f, "Error setting desktop wallpaper: {e}"),
+            Self::Windows(err) => write!(f, "Windows desktop wallpaper API error: {}", err),
         }
     }
 }
 
-impl std::error::Error for WallpaperError {}
+impl std::error::Error for WallpaperServiceError {}
 
 #[cfg(target_os = "windows")]
-impl From<windows::core::Error> for WallpaperError {
-    fn from(e: windows::core::Error) -> Self {
-        Self::Windows(e)
+impl From<windows::core::Error> for WallpaperServiceError {
+    fn from(err: windows::core::Error) -> Self {
+        Self::Windows(err)
     }
 }
 
 pub fn set_desktop_wallpaper(
     path: &str,
     target_point: Option<(i32, i32)>,
-) -> Result<(), WallpaperError> {
+) -> Result<(), WallpaperServiceError> {
     #[cfg(target_os = "windows")]
     {
         windows_impl::set_wallpaper(Path::new(path), target_point)
@@ -40,14 +40,14 @@ pub fn set_desktop_wallpaper(
 
     #[cfg(not(target_os = "windows"))]
     {
-        let _ = (path, target_point, Path::new(""));
-        Err(WallpaperError::Unsupported)
+        let _ = (path, target_point);
+        Err(WallpaperServiceError::UnsupportedPlatform)
     }
 }
 
 #[cfg(target_os = "windows")]
 mod windows_impl {
-    use super::WallpaperError;
+    use super::WallpaperServiceError;
     use std::ffi::c_void;
     use std::path::Path;
 
@@ -97,17 +97,17 @@ mod windows_impl {
     pub fn set_wallpaper(
         path: &Path,
         target_point: Option<(i32, i32)>,
-    ) -> Result<(), WallpaperError> {
+    ) -> Result<(), WallpaperServiceError> {
         if !path.exists() {
-            return Err(WallpaperError::FileNotFound);
+            return Err(WallpaperServiceError::FileNotFound);
         }
 
-        let full = dunce::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
-        let wallpaper = HSTRING::from(full.as_os_str());
+        let canonical_path = dunce::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+        let wallpaper_hstring = HSTRING::from(canonical_path.as_os_str());
 
-        match set_via_com(&wallpaper, target_point) {
+        match set_via_com(&wallpaper_hstring, target_point) {
             Ok(()) => Ok(()),
-            Err(_) => set_via_spi(&wallpaper),
+            Err(_) => set_via_spi(&wallpaper_hstring),
         }
     }
 
@@ -117,11 +117,11 @@ mod windows_impl {
     ) -> windows::core::Result<()> {
         let _com = ComGuard::new();
 
-        let dw: IDesktopWallpaper =
+        let desktop_wallpaper: IDesktopWallpaper =
             unsafe { CoCreateInstance(&DesktopWallpaper, None, CLSCTX_ALL)? };
 
         let monitor = match target_point {
-            Some(pt) => find_monitor(&dw, pt)?,
+            Some(point) => find_target_monitor(&desktop_wallpaper, point)?,
             None => None,
         };
 
@@ -130,10 +130,10 @@ mod windows_impl {
             .map(MonitorId::as_pcwstr)
             .unwrap_or(PCWSTR::null());
 
-        unsafe { dw.SetWallpaper(monitor_ptr, PCWSTR(wallpaper.as_ptr())) }
+        unsafe { desktop_wallpaper.SetWallpaper(monitor_ptr, PCWSTR(wallpaper.as_ptr())) }
     }
 
-    fn find_monitor(
+    fn find_target_monitor(
         dw: &IDesktopWallpaper,
         (px, py): (i32, i32),
     ) -> windows::core::Result<Option<MonitorId>> {
@@ -151,7 +151,7 @@ mod windows_impl {
         Ok(None)
     }
 
-    fn set_via_spi(wallpaper: &HSTRING) -> Result<(), WallpaperError> {
+    fn set_via_spi(wallpaper: &HSTRING) -> Result<(), WallpaperServiceError> {
         unsafe {
             SystemParametersInfoW(
                 SPI_SETDESKWALLPAPER,

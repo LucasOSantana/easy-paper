@@ -164,3 +164,46 @@ html, body {
     opacity: 1;
   }
 }
+
+/* Carousel Topbar & Settings Trigger */
+.carousel-topbar {
+  position: absolute;
+  top: 20px;
+  right: 32px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-settings-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(39, 39, 39, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(252, 252, 252, 0.12);
+  border-radius: 9999px;
+  color: #fcfcfc;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.btn-settings-trigger:hover {
+  background: #333333;
+  border-color: rgba(108, 33, 220, 0.6);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 14px rgba(108, 33, 220, 0.35);
+}
+
+.btn-settings-trigger:active {
+  transform: translateY(0);
+}
+  transform: translateY(0);
+}
