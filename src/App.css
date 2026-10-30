@@ -69,7 +69,6 @@ html, body {
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: transparent;
-  will-change: transform, opacity;
 }
 
 .carousel-card img {
@@ -182,8 +181,6 @@ html, body {
   gap: 8px;
   padding: 8px 14px;
   background: rgba(39, 39, 39, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(252, 252, 252, 0.12);
   border-radius: 9999px;
   color: #fcfcfc;

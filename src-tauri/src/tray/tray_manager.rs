@@ -1,9 +1,8 @@
 use std::path::PathBuf;
 use tauri::Manager;
-use crate::commands::open_settings_window;
 use crate::services::config_service::get_default_images_directory;
 use crate::services::shortcut_service::reload_shortcut_from_config;
-use crate::services::window_service::toggle_main_window;
+use crate::services::window_service::{show_settings_window, toggle_main_window};
 use crate::state::ConfigState;
 
 fn open_configured_images_folder<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
@@ -53,7 +52,7 @@ pub fn setup_system_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::erro
                     open_configured_images_folder(app);
                 }
                 "settings" => {
-                    open_settings_window(app.clone());
+                    show_settings_window(app);
                 }
                 "reload" => {
                     reload_shortcut_from_config(app);

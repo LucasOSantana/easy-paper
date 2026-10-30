@@ -1,0 +1,22 @@
+[package]
+name = "taskbar-tap"
+version = "0.1.0"
+description = "XAML diagnostics TAP loaded into explorer.exe by Easy Paper to restyle the Windows 11 taskbar"
+edition = "2024"
+
+[lib]
+name = "taskbar_tap"
+crate-type = ["cdylib"]
+
+[dependencies]
+windows-core = "0.62.2"
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Com",
+    "Win32_System_Ole",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[build-dependencies]
+windows-bindgen = "=0.65.0"

@@ -3,9 +3,10 @@ import { ReactNode } from "react";
 export interface AppConfig {
   shortcut: string;
   images_path: string;
+  taskbar_transparent: boolean;
 }
 
-export type TabId = "wallpapers" | "online_sources" | "appearance" | "about";
+export type TabId = "wallpapers" | "taskbar" | "online_sources" | "appearance" | "about";
 
 export interface TabDefinition {
   id: TabId;

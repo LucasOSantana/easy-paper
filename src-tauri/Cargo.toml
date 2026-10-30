@@ -5,6 +5,9 @@ description = "A Tauri App"
 authors = ["you"]
 edition = "2024"
 
+[workspace]
+members = ["taskbar-tap"]
+
 [lib]
 name = "easy_paper_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
@@ -13,13 +16,12 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri = { version = "2", features = ["tray-icon", "image-png", "protocol-asset"] }
 tauri-plugin-opener = "2"
 tauri-plugin-global-shortcut = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "bmp"] }
-base64 = "0.22"
 rfd = "0.17.2"
 
 [profile.release]
@@ -31,9 +33,12 @@ strip = true
 
 [target.'cfg(windows)'.dependencies]
 dunce = "1"
-windows = { version = "0.61", features = [
+webview2-com = "0.39"
+windows = { version = "0.62", features = [
     "Win32_Foundation",
+    "Win32_Graphics_Gdi",
     "Win32_System_Com",
+    "Win32_System_LibraryLoader",
     "Win32_UI_Shell",
     "Win32_UI_WindowsAndMessaging",
 ] }

@@ -18,6 +18,10 @@ export const TauriService = {
     });
   },
 
+  async setTaskbarTransparent(transparent: boolean): Promise<AppConfig> {
+    return invoke<AppConfig>("set_taskbar_transparent", { transparent });
+  },
+
   async pickFolder(): Promise<string | null> {
     return invoke<string | null>("pick_folder");
   },

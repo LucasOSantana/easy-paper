@@ -6,8 +6,10 @@ export function useAppSettings() {
   const [config, setConfig] = useState<AppConfig>({
     shortcut: "super+j",
     images_path: "",
+    taskbar_transparent: false,
   });
   const [loading, setLoading] = useState(true);
+  const [taskbarUpdating, setTaskbarUpdating] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const showFeedback = useCallback((type: "success" | "error", message: string) => {
@@ -62,6 +64,23 @@ export function useAppSettings() {
     }
   };
 
+  const changeTaskbarTransparent = async (transparent: boolean) => {
+    try {
+      setTaskbarUpdating(true);
+      const updated = await TauriService.setTaskbarTransparent(transparent);
+      setConfig(updated);
+      showFeedback(
+        "success",
+        transparent ? "Taskbar is now transparent." : "Taskbar restored to the Windows default."
+      );
+    } catch (err) {
+      console.error(err);
+      showFeedback("error", typeof err === "string" ? err : "Unable to update the taskbar.");
+    } finally {
+      setTaskbarUpdating(false);
+    }
+  };
+
   const openFolderExplorer = async () => {
     if (!config.images_path) return;
     try {
@@ -82,9 +101,11 @@ export function useAppSettings() {
   return {
     config,
     loading,
+    taskbarUpdating,
     feedback,
     changeFolder,
     changeShortcut,
+    changeTaskbarTransparent,
     openFolderExplorer,
     dismissSettings,
   };

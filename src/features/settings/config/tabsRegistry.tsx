@@ -1,8 +1,10 @@
 import { TabDefinition } from "../../../types/settings";
 import { WallpapersTab } from "../tabs/WallpapersTab/WallpapersTab";
+import { TaskbarTab } from "../tabs/TaskbarTab/TaskbarTab";
+import { useAppSettings } from "../../../hooks/useAppSettings";
 
 export function createTabsRegistry(
-  settings: any
+  settings: ReturnType<typeof useAppSettings>
 ): TabDefinition[] {
   return [
     {
@@ -16,6 +18,19 @@ export function createTabsRegistry(
         </svg>
       ),
       component: () => <WallpapersTab settings={settings} />,
+    },
+    {
+      id: "taskbar",
+      label: "Taskbar",
+      icon: () => (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="3" width="20" height="18" rx="2" />
+          <line x1="2" y1="16" x2="22" y2="16" />
+          <line x1="6" y1="18.5" x2="8" y2="18.5" />
+          <line x1="11" y1="18.5" x2="13" y2="18.5" />
+        </svg>
+      ),
+      component: () => <TaskbarTab settings={settings} />,
     },
     {
       id: "online_sources",

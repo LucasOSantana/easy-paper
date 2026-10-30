@@ -15,6 +15,7 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 - **Multi-Monitor & Per-Monitor Support**: Automatically summons on the monitor where your cursor is currently located, applying the selected wallpaper exclusively to that monitor without altering other displays.
 - **High-Performance Thumbnail Caching**: Automatically creates and caches sharp 450x800 Lanczos-filtered thumbnails in a local `.cache/thumbnails` folder, keeping resource usage minimal even with large 4K/8K wallpaper collections.
 - **One-Click Native Wallpaper Switching**: Seamlessly updates your desktop background using Windows Shell COM APIs (`IDesktopWallpaper`) with automatic fallback to `SystemParametersInfoW`, accompanied by animated ripple and pulse feedback.
+- **Transparent Taskbar (Windows 11)**: Removes the taskbar background so your wallpaper shows through, similar to TranslucentTB. Reverted when Easy Paper quits.
 - **System Tray Integration**: Resides discreetly in the Windows system tray / notification area with options to open configuration, reload shortcuts, or quit.
 
 ---
@@ -50,7 +51,8 @@ Easy Paper saves its configuration in a simple `config.json` file on your machin
 ```json
 {
   "shortcut": "super+j",
-  "images_path": "C:\\Users\\your_user\\Pictures\\Wallpapers"
+  "images_path": "C:\\Users\\your_user\\Pictures\\Wallpapers",
+  "taskbar_transparent": false
 }
 ```
 
@@ -60,6 +62,7 @@ Easy Paper saves its configuration in a simple `config.json` file on your machin
 | :--- | :--- | :--- | :--- |
 | `shortcut` | `string` | `"super+j"` | Global hotkey combination to toggle the window (e.g. `alt+space`, `ctrl+shift+p`, `super+w`). |
 | `images_path` | `string` | App data `images` directory | Absolute path to the folder containing your wallpapers (`.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp`). |
+| `taskbar_transparent` | `boolean` | `false` | Makes the Windows 11 taskbar transparent. Toggle it from **Settings > Taskbar**. |
 
 > **Tip**: After editing `config.json`, right-click the tray icon and select **"Reload Shortcut"** to apply changes immediately without restarting the application.
 
@@ -97,11 +100,15 @@ Easy Paper saves its configuration in a simple `config.json` file on your machin
    ```
    The compiled executable and installer will be located in `src-tauri/target/release/`.
 
+### Taskbar Component (`src-tauri/taskbar-tap`)
+
+A DLL loaded into `explorer.exe` through `InitializeXamlDiagnosticsEx` (like TranslucentTB) that hides the taskbar background. It is built by `npm run build:tap`, which `tauri dev` / `tauri build` run first. Changes to the DLL only take effect after restarting Explorer.
+
 ---
 
 ## Tech Stack
 
 - **Framework**: [Tauri v2](https://v2.tauri.app/)
-- **Backend**: Rust (Windows Shell `IDesktopWallpaper` COM API & Win32 API, multi-monitor cursor tracking, `image` crate with Lanczos3 filtering, global hotkeys, system tray)
+- **Backend**: Rust (XAML diagnostics DLL for the taskbar, Windows Shell `IDesktopWallpaper` COM API & Win32 API, multi-monitor cursor tracking, `image` crate with Lanczos3 filtering, global hotkeys, system tray)
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Pure CSS 3D transforms (`perspective`, `transform-style: preserve-3d`)

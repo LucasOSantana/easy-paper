@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { ImageItem } from "../../types/wallpaper";
 import { TauriService } from "../../services/tauriCommands";
 
@@ -164,7 +165,7 @@ export function CarouselView() {
                   }}
                   onClick={() => handleSelect(img, index)}
                 >
-                  <img src={img.thumbnail} alt="" loading="lazy" />
+                  <img src={convertFileSrc(img.thumbnail)} alt="" loading="lazy" />
                   {isApplying && (
                     <div className="applied-overlay">
                       <div className="ripple-wave" />

@@ -1,6 +1,5 @@
 use std::fs;
-use std::path::Path;
-use base64::Engine;
+use std::path::{Path, PathBuf};
 use image::imageops::FilterType;
 use crate::models::WallpaperImageItem;
 
@@ -11,12 +10,16 @@ fn is_supported_image_extension(path: &Path) -> bool {
     }
 }
 
+pub fn thumbnail_cache_dir(folder_path: &Path) -> PathBuf {
+    folder_path.join(".cache").join("thumbnails")
+}
+
 pub fn get_wallpaper_images_from_folder(folder_path: &Path) -> Vec<WallpaperImageItem> {
     if !folder_path.exists() || !folder_path.is_dir() {
         return Vec::new();
     }
 
-    let cache_dir = folder_path.join(".cache").join("thumbnails");
+    let cache_dir = thumbnail_cache_dir(folder_path);
     let _ = fs::create_dir_all(&cache_dir);
 
     let entries = match fs::read_dir(folder_path) {
@@ -77,14 +80,11 @@ pub fn get_wallpaper_images_from_folder(folder_path: &Path) -> Vec<WallpaperImag
             }
 
             if thumb_path.exists() {
-                if let Ok(bytes) = fs::read(&thumb_path) {
-                    let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
-                    items.push(WallpaperImageItem {
-                        name: file_name,
-                        path: path.to_string_lossy().to_string(),
-                        thumbnail: format!("data:image/jpeg;base64,{}", encoded),
-                    });
-                }
+                items.push(WallpaperImageItem {
+                    name: file_name,
+                    path: path.to_string_lossy().to_string(),
+                    thumbnail: thumb_path.to_string_lossy().to_string(),
+                });
             }
         }
     }

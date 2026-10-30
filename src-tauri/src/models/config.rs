@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 pub struct AppConfig {
     pub shortcut: String,
     pub images_path: String,
+    #[serde(default)]
+    pub taskbar_transparent: bool,
 }
 
 impl Default for AppConfig {
@@ -11,6 +13,7 @@ impl Default for AppConfig {
         Self {
             shortcut: "super+j".to_string(),
             images_path: String::new(),
+            taskbar_transparent: false,
         }
     }
 }

@@ -1,5 +1,10 @@
 use std::time::Instant;
-use tauri::Manager;
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use webview2_com::Microsoft::Web::WebView2::Win32::{
+    ICoreWebView2_19, COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW,
+    COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL,
+};
+use windows::core::Interface;
 use crate::state::WindowDisplayState;
 use crate::services::shortcut_service::reload_shortcut_from_config;
 
@@ -81,15 +86,53 @@ pub fn toggle_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let is_visible = window.is_visible().unwrap_or(false);
         if is_visible {
-            let _ = window.hide();
+            hide_main_window(app);
         } else {
             resize_and_center_main_window(&window);
             if let Some(state) = app.try_state::<WindowDisplayState>() {
                 *state.0.lock().unwrap() = Instant::now();
             }
+            set_webview_active(&window, true);
             let _ = window.show();
             let _ = window.unminimize();
             let _ = window.set_focus();
         }
     }
+}
+
+pub fn hide_main_window<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+        set_webview_active(&window, false);
+    }
+}
+
+fn set_webview_active<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, active: bool) {
+    let _ = window.with_webview(move |webview| unsafe {
+        let controller = webview.controller();
+        let _ = controller.SetIsVisible(active);
+
+        let level = if active {
+            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL
+        } else {
+            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW
+        };
+        if let Ok(core) = controller.CoreWebView2().and_then(|core| core.cast::<ICoreWebView2_19>()) {
+            let _ = core.SetMemoryUsageTargetLevel(level);
+        }
+    });
+}
+
+pub fn show_settings_window<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("settings") {
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::default())
+        .title("Easy Paper Settings")
+        .inner_size(860.0, 580.0)
+        .center()
+        .build();
 }

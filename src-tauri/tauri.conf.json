@@ -4,9 +4,9 @@
   "version": "1.1.0",
   "identifier": "easy-paper",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run build:tap && npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build:tap && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -21,23 +21,14 @@
         "shadow": false,
         "skipTaskbar": true,
         "visible": false
-      },
-      {
-        "label": "settings",
-        "title": "Easy Paper Settings",
-        "width": 860,
-        "height": 580,
-        "resizable": true,
-        "transparent": false,
-        "decorations": true,
-        "shadow": true,
-        "center": true,
-        "visible": false,
-        "skipTaskbar": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": []
+      }
     }
   },
   "bundle": {
@@ -49,6 +40,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": {
+      "target/release/taskbar_tap.dll": "taskbar_tap.dll"
+    }
   }
 }

@@ -1,8 +1,9 @@
 use std::path::PathBuf;
+use tauri::Manager;
 use crate::models::WallpaperImageItem;
 use crate::state::ConfigState;
 use crate::services::config_service::get_default_images_directory;
-use crate::services::thumbnail_service::get_wallpaper_images_from_folder;
+use crate::services::thumbnail_service::{get_wallpaper_images_from_folder, thumbnail_cache_dir};
 use crate::services::wallpaper_service::set_desktop_wallpaper;
 
 #[tauri::command]
@@ -22,6 +23,10 @@ pub fn get_images(
             path
         }
     };
+
+    let _ = app
+        .asset_protocol_scope()
+        .allow_directory(thumbnail_cache_dir(&folder_path), false);
 
     get_wallpaper_images_from_folder(&folder_path)
 }

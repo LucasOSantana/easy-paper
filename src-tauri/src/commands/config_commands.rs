@@ -32,6 +32,7 @@ pub fn update_config(
     let updated_config = AppConfig {
         shortcut: clean_shortcut,
         images_path: images_path.trim().to_string(),
+        ..config_state.0.lock().unwrap().clone()
     };
 
     save_config(&app, &updated_config)

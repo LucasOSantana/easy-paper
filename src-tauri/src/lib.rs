@@ -8,13 +8,17 @@ use std::str::FromStr;
 use std::sync::Mutex;
 use std::time::Instant;
 
-use tauri::{Manager, WindowEvent};
+use tauri::webview::PageLoadEvent;
+use tauri::{Manager, RunEvent, WindowEvent};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 use state::{ConfigState, WindowDisplayState};
 use services::config_service::load_config;
-use services::window_service::{resize_and_center_main_window, toggle_main_window};
+use services::window_service::{hide_main_window, resize_and_center_main_window, toggle_main_window};
 use services::autostart_service::enable_windows_autostart;
+use services::taskbar_service::{
+    apply_saved_taskbar_transparency, set_taskbar_transparency, watch_explorer_restarts,
+};
 use tray::setup_system_tray;
 use commands::*;
 
@@ -27,6 +31,12 @@ pub fn run() {
             let app_config = load_config(app);
             let initial_shortcut = app_config.shortcut.clone();
             app.manage(ConfigState(Mutex::new(app_config)));
+
+            watch_explorer_restarts(app.handle());
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn_blocking(move || {
+                let _ = apply_saved_taskbar_transparency(&app_handle);
+            });
 
             if let Some(window) = app.get_webview_window("main") {
                 resize_and_center_main_window(&window);
@@ -55,6 +65,12 @@ pub fn run() {
 
             Ok(())
         })
+        .on_page_load(|webview, payload| {
+            let hidden = !webview.window().is_visible().unwrap_or(true);
+            if webview.label() == "main" && matches!(payload.event(), PageLoadEvent::Finished) && hidden {
+                hide_main_window(webview.app_handle());
+            }
+        })
         .on_window_event(|window, event| {
             if window.label() == "main" {
                 if let WindowEvent::Focused(false) = event {
@@ -64,12 +80,7 @@ pub fn run() {
                         return;
                     }
 
-                    let _ = window.hide();
-                }
-            } else if window.label() == "settings" {
-                if let WindowEvent::CloseRequested { api, .. } = event {
-                    api.prevent_close();
-                    let _ = window.hide();
+                    hide_main_window(window.app_handle());
                 }
             }
         })
@@ -82,8 +93,14 @@ pub fn run() {
             pick_folder,
             open_settings_window,
             close_settings_window,
-            open_folder_path
+            open_folder_path,
+            set_taskbar_transparent
         ])
-        .run(tauri::generate_context!())
-        .expect("Fatal error while executing Tauri application");
+        .build(tauri::generate_context!())
+        .expect("Fatal error while executing Tauri application")
+        .run(|app, event| {
+            if let RunEvent::Exit = event {
+                let _ = set_taskbar_transparency(app, false);
+            }
+        });
 }
