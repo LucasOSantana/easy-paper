@@ -1,6 +1,7 @@
 import { TabDefinition } from "../../../types/settings";
 import { WallpapersTab } from "../tabs/WallpapersTab/WallpapersTab";
 import { TaskbarTab } from "../tabs/TaskbarTab/TaskbarTab";
+import { OnlineSourcesTab } from "../tabs/OnlineSourcesTab/OnlineSourcesTab";
 import { useAppSettings } from "../../../hooks/useAppSettings";
 
 export function createTabsRegistry(
@@ -17,7 +18,7 @@ export function createTabsRegistry(
           <polyline points="21 15 16 10 5 21" />
         </svg>
       ),
-      component: () => <WallpapersTab settings={settings} />,
+      render: () => <WallpapersTab settings={settings} />,
     },
     {
       id: "taskbar",
@@ -30,13 +31,11 @@ export function createTabsRegistry(
           <line x1="11" y1="18.5" x2="13" y2="18.5" />
         </svg>
       ),
-      component: () => <TaskbarTab settings={settings} />,
+      render: () => <TaskbarTab settings={settings} />,
     },
     {
       id: "online_sources",
       label: "Online Sources",
-      badge: "Soon",
-      disabled: true,
       icon: () => (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="10" />
@@ -44,7 +43,7 @@ export function createTabsRegistry(
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
         </svg>
       ),
-      component: () => <div />,
+      render: () => <OnlineSourcesTab onFeedback={settings.showFeedback} />,
     },
     {
       id: "appearance",
@@ -54,10 +53,10 @@ export function createTabsRegistry(
       icon: () => (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       ),
-      component: () => <div />,
+      render: () => null,
     },
   ];
 }

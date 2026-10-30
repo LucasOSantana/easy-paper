@@ -94,7 +94,9 @@ pub fn run() {
             open_settings_window,
             close_settings_window,
             open_folder_path,
-            set_taskbar_transparent
+            set_taskbar_transparent,
+            search_wallhaven,
+            download_wallhaven
         ])
         .build(tauri::generate_context!())
         .expect("Fatal error while executing Tauri application")

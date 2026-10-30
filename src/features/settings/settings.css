@@ -422,6 +422,135 @@
   cursor: not-allowed;
 }
 
+/* Online Sources */
+.source-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.source-tab {
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.source-tab:hover {
+  color: var(--color-text-white);
+}
+
+.source-tab.active {
+  color: var(--color-text-white);
+  border-bottom-color: var(--color-brand);
+}
+
+.search-query-field {
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.search-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.settings-select {
+  height: 32px;
+  padding: 0 10px;
+  background-color: var(--color-bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-white);
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+.settings-select:focus {
+  border-color: var(--color-brand);
+}
+
+.search-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.results-empty {
+  color: var(--color-text-dim);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.results-section.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.wallpaper-tile {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--border-light);
+}
+
+.wallpaper-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wallpaper-tile-bar {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  font-size: 11px;
+  color: var(--color-text-white);
+}
+
+.wallpaper-tile-button {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 /* Shortcut Section & Keycaps */
 .shortcut-display-box {
   display: flex;

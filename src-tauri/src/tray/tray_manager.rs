@@ -1,27 +1,9 @@
-use std::path::PathBuf;
-use tauri::Manager;
-use crate::services::config_service::get_default_images_directory;
+use crate::services::config_service::get_images_directory;
 use crate::services::shortcut_service::reload_shortcut_from_config;
 use crate::services::window_service::{show_settings_window, toggle_main_window};
-use crate::state::ConfigState;
 
 fn open_configured_images_folder<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
-    let folder = {
-        if let Some(state) = app.try_state::<ConfigState>() {
-            let config_lock = state.0.lock().unwrap();
-            if config_lock.images_path.trim().is_empty() {
-                get_default_images_directory(app)
-            } else {
-                let path = PathBuf::from(config_lock.images_path.trim());
-                if !path.exists() {
-                    let _ = std::fs::create_dir_all(&path);
-                }
-                path
-            }
-        } else {
-            get_default_images_directory(app)
-        }
-    };
+    let folder = get_images_directory(app);
 
     let _ = std::process::Command::new("explorer.exe")
         .arg(&folder)

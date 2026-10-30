@@ -14,7 +14,7 @@ export interface TabDefinition {
   icon: (active: boolean) => ReactNode;
   disabled?: boolean;
   badge?: string;
-  component: React.ComponentType;
+  render: () => ReactNode;
 }
 
 export interface FeedbackState {

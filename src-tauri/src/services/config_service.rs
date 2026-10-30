@@ -2,6 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
 use crate::models::AppConfig;
+use crate::state::ConfigState;
 
 pub fn get_default_images_directory<R: tauri::Runtime>(app: &impl Manager<R>) -> PathBuf {
     let directory = app
@@ -18,6 +19,23 @@ pub fn get_default_images_directory<R: tauri::Runtime>(app: &impl Manager<R>) ->
 
     let _ = fs::create_dir_all(&directory);
     directory
+}
+
+pub fn get_images_directory<R: tauri::Runtime>(app: &impl Manager<R>) -> PathBuf {
+    let configured = app
+        .try_state::<ConfigState>()
+        .map(|state| state.0.lock().unwrap().images_path.trim().to_string())
+        .unwrap_or_default();
+
+    if configured.is_empty() {
+        return get_default_images_directory(app);
+    }
+
+    let path = PathBuf::from(configured);
+    if !path.exists() {
+        let _ = fs::create_dir_all(&path);
+    }
+    path
 }
 
 pub fn get_config_path<R: tauri::Runtime>(app: &impl Manager<R>) -> Result<PathBuf, String> {

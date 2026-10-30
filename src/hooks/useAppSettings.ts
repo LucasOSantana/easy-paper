@@ -103,6 +103,7 @@ export function useAppSettings() {
     loading,
     taskbarUpdating,
     feedback,
+    showFeedback,
     changeFolder,
     changeShortcut,
     changeTaskbarTransparent,

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { AppConfig } from "../types/settings";
 import { ImageItem } from "../types/wallpaper";
+import { WallhavenPage, WallhavenSearch } from "../types/wallhaven";
 
 /**
  * Service to communicate with Tauri Rust backend commands.
@@ -48,5 +49,13 @@ export const TauriService = {
 
   async hideMainWindow(): Promise<void> {
     return invoke("hide_window");
+  },
+
+  async searchWallhaven(search: WallhavenSearch): Promise<WallhavenPage> {
+    return invoke<WallhavenPage>("search_wallhaven", { search });
+  },
+
+  async downloadWallhaven(url: string): Promise<void> {
+    return invoke("download_wallhaven", { url });
   },
 };

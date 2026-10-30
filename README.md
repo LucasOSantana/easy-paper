@@ -15,6 +15,7 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 - **Multi-Monitor & Per-Monitor Support**: Automatically summons on the monitor where your cursor is currently located, applying the selected wallpaper exclusively to that monitor without altering other displays.
 - **High-Performance Thumbnail Caching**: Automatically creates and caches sharp 450x800 Lanczos-filtered thumbnails in a local `.cache/thumbnails` folder, keeping resource usage minimal even with large 4K/8K wallpaper collections.
 - **One-Click Native Wallpaper Switching**: Seamlessly updates your desktop background using Windows Shell COM APIs (`IDesktopWallpaper`) with automatic fallback to `SystemParametersInfoW`, accompanied by animated ripple and pulse feedback.
+- **Online Wallpaper Search**: Search [Wallhaven](https://wallhaven.cc) from **Settings > Online Sources**, filtering by sorting, aspect ratio and your screen resolution, and download wallpapers straight into your folder.
 - **Transparent Taskbar (Windows 11)**: Removes the taskbar background so your wallpaper shows through, similar to TranslucentTB. Reverted when Easy Paper quits.
 - **System Tray Integration**: Resides discreetly in the Windows system tray / notification area with options to open configuration, reload shortcuts, or quit.
 

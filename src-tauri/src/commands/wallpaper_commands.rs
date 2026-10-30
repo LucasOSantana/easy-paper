@@ -1,28 +1,12 @@
-use std::path::PathBuf;
 use tauri::Manager;
 use crate::models::WallpaperImageItem;
-use crate::state::ConfigState;
-use crate::services::config_service::get_default_images_directory;
+use crate::services::config_service::get_images_directory;
 use crate::services::thumbnail_service::{get_wallpaper_images_from_folder, thumbnail_cache_dir};
 use crate::services::wallpaper_service::set_desktop_wallpaper;
 
 #[tauri::command]
-pub fn get_images(
-    app: tauri::AppHandle,
-    config_state: tauri::State<ConfigState>,
-) -> Vec<WallpaperImageItem> {
-    let folder_path = {
-        let state = config_state.0.lock().unwrap();
-        if state.images_path.trim().is_empty() {
-            get_default_images_directory(&app)
-        } else {
-            let path = PathBuf::from(state.images_path.trim());
-            if !path.exists() {
-                let _ = std::fs::create_dir_all(&path);
-            }
-            path
-        }
-    };
+pub fn get_images(app: tauri::AppHandle) -> Vec<WallpaperImageItem> {
+    let folder_path = get_images_directory(&app);
 
     let _ = app
         .asset_protocol_scope()

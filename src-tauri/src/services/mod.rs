@@ -5,3 +5,4 @@ pub mod window_service;
 pub mod shortcut_service;
 pub mod autostart_service;
 pub mod taskbar_service;
+pub mod wallhaven_service;

@@ -14,6 +14,53 @@ pub fn thumbnail_cache_dir(folder_path: &Path) -> PathBuf {
     folder_path.join(".cache").join("thumbnails")
 }
 
+pub fn ensure_thumbnail(path: &Path, cache_dir: &Path) -> PathBuf {
+    let safe_stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("image");
+
+    let thumb_file_name = format!("{}_vthumb.jpg", safe_stem);
+    let thumb_path = cache_dir.join(&thumb_file_name);
+
+    let should_generate = match (fs::metadata(path), fs::metadata(&thumb_path)) {
+        (Ok(src_meta), Ok(thumb_meta)) => {
+            match (src_meta.modified(), thumb_meta.modified()) {
+                (Ok(src_time), Ok(thumb_time)) => src_time > thumb_time,
+                _ => false,
+            }
+        }
+        (Ok(_), Err(_)) => true,
+        _ => false,
+    };
+
+    if should_generate {
+        if let Ok(mut img) = image::open(path) {
+            let (w, h) = (img.width(), img.height());
+            if w > 0 && h > 0 {
+                let target_aspect = 9.0 / 16.0;
+                let current_aspect = w as f64 / h as f64;
+
+                let cropped = if current_aspect > target_aspect {
+                    let crop_w = (h as f64 * target_aspect).round() as u32;
+                    let crop_x = (w - crop_w) / 2;
+                    img.crop(crop_x, 0, crop_w, h)
+                } else {
+                    let crop_h = (w as f64 / target_aspect).round() as u32;
+                    let crop_y = (h - crop_h) / 2;
+                    img.crop(0, crop_y, w, crop_h)
+                };
+
+                let _ = fs::create_dir_all(cache_dir);
+                let resized = cropped.resize_exact(450, 800, FilterType::Lanczos3);
+                let _ = resized.save(&thumb_path);
+            }
+        }
+    }
+
+    thumb_path
+}
+
 pub fn get_wallpaper_images_from_folder(folder_path: &Path) -> Vec<WallpaperImageItem> {
     if !folder_path.exists() || !folder_path.is_dir() {
         return Vec::new();
@@ -37,47 +84,7 @@ pub fn get_wallpaper_images_from_folder(folder_path: &Path) -> Vec<WallpaperImag
                 None => continue,
             };
 
-            let safe_stem = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("image");
-
-            let thumb_file_name = format!("{}_vthumb.jpg", safe_stem);
-            let thumb_path = cache_dir.join(&thumb_file_name);
-
-            let should_generate = match (fs::metadata(&path), fs::metadata(&thumb_path)) {
-                (Ok(src_meta), Ok(thumb_meta)) => {
-                    match (src_meta.modified(), thumb_meta.modified()) {
-                        (Ok(src_time), Ok(thumb_time)) => src_time > thumb_time,
-                        _ => false,
-                    }
-                }
-                (Ok(_), Err(_)) => true,
-                _ => false,
-            };
-
-            if should_generate {
-                if let Ok(mut img) = image::open(&path) {
-                    let (w, h) = (img.width(), img.height());
-                    if w > 0 && h > 0 {
-                        let target_aspect = 9.0 / 16.0;
-                        let current_aspect = w as f64 / h as f64;
-
-                        let cropped = if current_aspect > target_aspect {
-                            let crop_w = (h as f64 * target_aspect).round() as u32;
-                            let crop_x = (w - crop_w) / 2;
-                            img.crop(crop_x, 0, crop_w, h)
-                        } else {
-                            let crop_h = (w as f64 / target_aspect).round() as u32;
-                            let crop_y = (h - crop_h) / 2;
-                            img.crop(0, crop_y, w, crop_h)
-                        };
-
-                        let resized = cropped.resize_exact(450, 800, FilterType::Lanczos3);
-                        let _ = resized.save(&thumb_path);
-                    }
-                }
-            }
+            let thumb_path = ensure_thumbnail(&path, &cache_dir);
 
             if thumb_path.exists() {
                 items.push(WallpaperImageItem {

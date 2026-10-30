@@ -23,7 +23,6 @@ export default function SettingsWindow() {
   }, [settings]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
-  const ActiveComponent = activeTab.component;
 
   return (
     <div className="settings-root">
@@ -35,7 +34,7 @@ export default function SettingsWindow() {
         />
 
         <main className="settings-content-viewport">
-          <ActiveComponent />
+          {activeTab.render()}
           <FeedbackToast feedback={settings.feedback} />
         </main>
       </div>
