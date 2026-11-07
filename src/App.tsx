@@ -1,6 +1,7 @@
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import SettingsWindow from "./features/settings/SettingsWindow";
 import { CarouselView } from "./features/carousel/CarouselView";
+import "./styles/darkroom.css";
 import "./App.css";
 
 const windowLabel = getCurrentWebviewWindow().label;

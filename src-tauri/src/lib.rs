@@ -16,6 +16,9 @@ use state::{ConfigState, WindowDisplayState};
 use services::config_service::load_config;
 use services::window_service::{hide_main_window, resize_and_center_main_window, toggle_main_window};
 use services::autostart_service::enable_windows_autostart;
+use services::rotation_service::{start_rotation_worker, RotationState, AUTOSTART_ARG};
+use services::backup_service::save_original_wallpaper_once;
+use services::update_service::{check_on_startup, UpdateState};
 use services::taskbar_service::{
     apply_saved_taskbar_transparency, set_taskbar_transparency, watch_explorer_restarts,
 };
@@ -27,6 +30,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(WindowDisplayState(Mutex::new(Instant::now())))
+        .manage(RotationState::new())
+        .manage(UpdateState(Mutex::new(None)))
         .setup(|app| {
             let app_config = load_config(app);
             let initial_shortcut = app_config.shortcut.clone();
@@ -43,6 +48,18 @@ pub fn run() {
             }
 
             enable_windows_autostart();
+
+            // Look for a newer release once per app start.
+            check_on_startup(app.handle().clone());
+
+            // Back up the user's original wallpaper (first run only) before
+            // anything can change it, then start automatic rotation.
+            let launched_at_sign_in = std::env::args().any(|arg| arg == AUTOSTART_ARG);
+            let rotation_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                save_original_wallpaper_once(&rotation_handle);
+                start_rotation_worker(rotation_handle, launched_at_sign_in);
+            });
 
             #[cfg(desktop)]
             {
@@ -96,7 +113,15 @@ pub fn run() {
             open_folder_path,
             set_taskbar_transparent,
             search_wallhaven,
-            download_wallhaven
+            download_wallhaven,
+            set_auto_rotate,
+            has_stock_api_key,
+            save_stock_api_key,
+            remove_stock_api_key,
+            search_stock,
+            download_stock,
+            get_update_status,
+            check_for_updates
         ])
         .build(tauri::generate_context!())
         .expect("Fatal error while executing Tauri application")

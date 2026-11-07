@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { WallhavenSource } from "./wallhaven/WallhavenSource";
+import { StockSource } from "./stock/StockSource";
 
 type FeedbackHandler = (type: "success" | "error", message: string) => void;
 
@@ -15,6 +16,16 @@ const SOURCES: OnlineSource[] = [
     label: "Wallhaven",
     render: (onFeedback) => <WallhavenSource onFeedback={onFeedback} />,
   },
+  {
+    id: "unsplash",
+    label: "Unsplash",
+    render: (onFeedback) => <StockSource key="unsplash" provider="unsplash" onFeedback={onFeedback} />,
+  },
+  {
+    id: "pexels",
+    label: "Pexels",
+    render: (onFeedback) => <StockSource key="pexels" provider="pexels" onFeedback={onFeedback} />,
+  },
 ];
 
 interface OnlineSourcesTabProps {
@@ -28,9 +39,10 @@ export function OnlineSourcesTab({ onFeedback }: OnlineSourcesTabProps) {
   return (
     <div className="tab-pane">
       <div className="content-header-block">
+        <span className="content-eyebrow">Frame 03</span>
         <h2 className="content-header-title">Online Sources</h2>
         <p className="content-header-subtitle">
-          Find wallpapers online and save them straight into your wallpaper folder.
+          Find wallpapers online and save them straight into your wallpaper folder. Wallhaven works right away; Unsplash and Pexels use your own free API key.
         </p>
       </div>
 

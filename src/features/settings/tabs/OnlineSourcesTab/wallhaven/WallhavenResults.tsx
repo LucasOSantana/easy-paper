@@ -28,14 +28,24 @@ export function WallhavenResults({
 
   return (
     <section className={`results-section ${loading ? "loading" : ""}`}>
+      <div className="contact-sheet-header">
+        <span>Contact sheet</span>
+        <span className="contact-sheet-count">{result.data.length} frames</span>
+      </div>
+
       <div className="wallpaper-grid">
-        {result.data.map((wallpaper) => {
+        {result.data.map((wallpaper, index) => {
           const state = downloads[wallpaper.id];
           return (
             <div key={wallpaper.id} className="wallpaper-tile">
-              <img src={wallpaper.thumbs.small} alt="" loading="lazy" decoding="async" />
+              <div className="wallpaper-tile-image">
+                <img src={wallpaper.thumbs.small} alt="" loading="lazy" decoding="async" />
+              </div>
               <div className="wallpaper-tile-bar">
-                <span>{wallpaper.resolution}</span>
+                <span className="wallpaper-tile-meta">
+                  <span className="wallpaper-tile-number">▸ {String(index + 1).padStart(2, "0")}</span>
+                  <span>{wallpaper.resolution}</span>
+                </span>
                 <button
                   className="btn-secondary wallpaper-tile-button"
                   type="button"

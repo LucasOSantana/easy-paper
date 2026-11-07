@@ -1,26 +1,9 @@
-use std::fs::{self, File};
-use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::LazyLock;
-use ureq::tls::{RootCerts, TlsConfig, TlsProvider};
-use ureq::Agent;
 use crate::models::{WallhavenPage, WallhavenSearch};
+use crate::services::http_client::{download_to_file, AGENT};
 
 const SEARCH_URL: &str = "https://wallhaven.cc/api/v1/search";
 const IMAGE_HOST: &str = "https://w.wallhaven.cc/";
-
-static AGENT: LazyLock<Agent> = LazyLock::new(|| {
-    let tls = TlsConfig::builder()
-        .provider(TlsProvider::NativeTls)
-        .root_certs(RootCerts::PlatformVerifier)
-        .build();
-
-    Agent::config_builder()
-        .tls_config(tls)
-        .user_agent(concat!("easy-paper/", env!("CARGO_PKG_VERSION")))
-        .build()
-        .new_agent()
-});
 
 pub fn search(search: &WallhavenSearch, min_resolution: Option<(u32, u32)>) -> Result<WallhavenPage, String> {
     let mut request = AGENT
@@ -58,17 +41,7 @@ pub fn download(url: &str, folder: &Path) -> Result<PathBuf, String> {
         return Ok(target);
     }
 
-    let mut response = AGENT.get(url).call().map_err(describe_error)?;
-    let partial = target.with_extension("part");
-    let saved = File::create(&partial)
-        .and_then(|mut file| io::copy(&mut response.body_mut().as_reader(), &mut file))
-        .and_then(|_| fs::rename(&partial, &target));
-
-    if let Err(e) = saved {
-        let _ = fs::remove_file(&partial);
-        return Err(format!("Failed to save wallpaper: {}", e));
-    }
-
+    download_to_file(url, &target, describe_error)?;
     Ok(target)
 }
 

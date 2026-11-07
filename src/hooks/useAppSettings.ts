@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { AppConfig, FeedbackState } from "../types/settings";
+import { AppConfig, AutoRotateConfig, FeedbackState } from "../types/settings";
 import { TauriService } from "../services/tauriCommands";
 
 export function useAppSettings() {
@@ -7,9 +7,16 @@ export function useAppSettings() {
     shortcut: "super+j",
     images_path: "",
     taskbar_transparent: false,
+    auto_rotate: {
+      enabled: false,
+      trigger: "interval",
+      interval_minutes: 180,
+      order: "shuffle",
+    },
   });
   const [loading, setLoading] = useState(true);
   const [taskbarUpdating, setTaskbarUpdating] = useState(false);
+  const [autoRotateUpdating, setAutoRotateUpdating] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const showFeedback = useCallback((type: "success" | "error", message: string) => {
@@ -81,6 +88,28 @@ export function useAppSettings() {
     }
   };
 
+  const changeAutoRotate = async (settings: AutoRotateConfig) => {
+    const wasEnabled = config.auto_rotate.enabled;
+    try {
+      setAutoRotateUpdating(true);
+      const updated = await TauriService.setAutoRotate(settings);
+      setConfig(updated);
+      if (wasEnabled !== settings.enabled) {
+        showFeedback(
+          "success",
+          settings.enabled ? "Automatic rotation turned on." : "Automatic rotation turned off."
+        );
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      showFeedback("error", typeof err === "string" ? err : "Unable to update automatic rotation.");
+      return false;
+    } finally {
+      setAutoRotateUpdating(false);
+    }
+  };
+
   const openFolderExplorer = async () => {
     if (!config.images_path) return;
     try {
@@ -102,11 +131,13 @@ export function useAppSettings() {
     config,
     loading,
     taskbarUpdating,
+    autoRotateUpdating,
     feedback,
     showFeedback,
     changeFolder,
     changeShortcut,
     changeTaskbarTransparent,
+    changeAutoRotate,
     openFolderExplorer,
     dismissSettings,
   };

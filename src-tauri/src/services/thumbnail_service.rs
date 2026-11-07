@@ -10,6 +10,20 @@ fn is_supported_image_extension(path: &Path) -> bool {
     }
 }
 
+/// Lists the supported image files directly inside `folder_path`, without
+/// generating thumbnails. Used by background rotation.
+pub fn list_image_files(folder_path: &Path) -> Vec<PathBuf> {
+    let Ok(entries) = fs::read_dir(folder_path) else {
+        return Vec::new();
+    };
+
+    entries
+        .flatten()
+        .map(|entry| entry.path())
+        .filter(|path| path.is_file() && is_supported_image_extension(path))
+        .collect()
+}
+
 pub fn thumbnail_cache_dir(folder_path: &Path) -> PathBuf {
     folder_path.join(".cache").join("thumbnails")
 }

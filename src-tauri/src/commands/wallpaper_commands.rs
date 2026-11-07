@@ -2,6 +2,7 @@ use tauri::Manager;
 use crate::models::WallpaperImageItem;
 use crate::services::config_service::get_images_directory;
 use crate::services::thumbnail_service::{get_wallpaper_images_from_folder, thumbnail_cache_dir};
+use crate::services::rotation_service::reset_rotation_timer;
 use crate::services::wallpaper_service::set_desktop_wallpaper;
 
 #[tauri::command]
@@ -26,5 +27,9 @@ pub fn set_wallpaper(window: tauri::WebviewWindow, path: String) -> Result<(), S
         None
     };
 
-    set_desktop_wallpaper(&path, target_point).map_err(|e| e.to_string())
+    set_desktop_wallpaper(&path, target_point).map_err(|e| e.to_string())?;
+
+    // A manual pick restarts the automatic rotation countdown.
+    reset_rotation_timer(window.app_handle());
+    Ok(())
 }

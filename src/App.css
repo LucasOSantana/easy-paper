@@ -5,7 +5,8 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: transparent !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--type-body);
+  -webkit-font-smoothing: antialiased;
   user-select: none;
 }
 
@@ -14,6 +15,10 @@ html, body {
   height: 100%;
   background: transparent !important;
 }
+
+/* ------------------------------------------------------------------ */
+/* Carousel overlay — the enlarger easel                              */
+/* ------------------------------------------------------------------ */
 
 .carousel-container {
   box-sizing: border-box;
@@ -31,13 +36,27 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   height: 100%;
-  color: #ffffff;
-  font-size: 1rem;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  color: var(--emulsion);
+  font-size: 14px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+}
+
+.carousel-empty p {
+  margin: 0;
+}
+
+.carousel-empty-eyebrow {
+  font-family: var(--type-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--safelight-text);
 }
 
 .carousel-stage {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
@@ -57,18 +76,21 @@ html, body {
   justify-content: center;
 }
 
+/* A print on the easel: crisp corners, a dark rebate edge */
 .carousel-card {
   position: absolute;
   width: 200px;
   height: 355px;
-  border-radius: 14px;
-  overflow: hidden;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transform-origin: center center;
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease, filter 0.45s ease, box-shadow 0.45s ease;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: transparent;
+  transition:
+    transform 0.32s var(--ease-out),
+    opacity 0.32s var(--ease-out);
+  background: var(--rebate);
+  box-shadow:
+    0 0 0 1px rgba(237, 230, 218, 0.1),
+    0 18px 40px rgba(0, 0, 0, 0.6);
 }
 
 .carousel-card img {
@@ -76,95 +98,160 @@ html, body {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: inherit;
   pointer-events: none;
-}
-
-.carousel-card.active {
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 28px rgba(255, 255, 255, 0.2);
-}
-
-.carousel-card.applying {
-  animation: apply-pop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  border: 2px solid #60a5fa !important;
-  box-shadow: 0 0 45px rgba(96, 165, 250, 0.85), 0 0 90px rgba(59, 130, 246, 0.5), 0 24px 60px rgba(0, 0, 0, 0.85) !important;
-  z-index: 200 !important;
 }
 
 .carousel-card:hover:not(.active):not(.applying) {
-  opacity: 0.95 !important;
-  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(237, 230, 218, 0.28),
+    0 18px 40px rgba(0, 0, 0, 0.6);
 }
 
-.applied-overlay {
+/* Frame in focus: negative-carrier rebate + easel crop marks */
+.carousel-card.active {
+  box-shadow:
+    0 0 0 1px rgba(237, 230, 218, 0.55),
+    0 0 0 5px var(--rebate),
+    0 0 0 6px rgba(237, 230, 218, 0.12),
+    0 28px 64px rgba(0, 0, 0, 0.8);
+}
+
+.carousel-card.active::after {
+  --mark: rgba(237, 230, 218, 0.6);
+  --len: 14px;
+  content: "";
+  position: absolute;
+  inset: -16px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--mark), var(--mark)) top left / var(--len) 1px,
+    linear-gradient(var(--mark), var(--mark)) top left / 1px var(--len),
+    linear-gradient(var(--mark), var(--mark)) top right / var(--len) 1px,
+    linear-gradient(var(--mark), var(--mark)) top right / 1px var(--len),
+    linear-gradient(var(--mark), var(--mark)) bottom left / var(--len) 1px,
+    linear-gradient(var(--mark), var(--mark)) bottom left / 1px var(--len),
+    linear-gradient(var(--mark), var(--mark)) bottom right / var(--len) 1px,
+    linear-gradient(var(--mark), var(--mark)) bottom right / 1px var(--len);
+  background-repeat: no-repeat;
+}
+
+/* Applying: the print develops under the safelight */
+.carousel-card.applying {
+  z-index: 200 !important;
+  box-shadow:
+    0 0 0 1px var(--safelight),
+    0 0 0 5px var(--rebate),
+    0 0 0 6px var(--safelight-edge),
+    0 0 48px rgba(200, 50, 30, 0.35),
+    0 28px 64px rgba(0, 0, 0, 0.8) !important;
+}
+
+.carousel-card.applying::after {
+  --mark: var(--safelight);
+}
+
+.carousel-card.applying img {
+  animation: develop-print 0.6s var(--ease-out) both;
+}
+
+.develop-overlay {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(1.5px);
-  border-radius: 14px;
+  border-radius: inherit;
   overflow: hidden;
+  pointer-events: none;
+  background: var(--safelight);
+  mix-blend-mode: multiply;
+  animation: safelight-wash 0.6s var(--ease-out) both;
+}
+
+.develop-label {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  font-family: var(--type-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--emulsion);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  animation: label-in 0.2s var(--ease-out) 0.12s both;
+}
+
+@keyframes label-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes develop-print {
+  from {
+    filter: grayscale(1) brightness(2.2) contrast(0.35);
+    transform: scale(1.015);
+  }
+  to {
+    filter: none;
+    transform: scale(1);
+  }
+}
+
+@keyframes safelight-wash {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.12;
+  }
+}
+
+/* Edge print under the frame in focus */
+.frame-caption {
+  position: absolute;
+  top: calc(50% + 226px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 420px;
+  padding: 5px 10px;
+  background: rgba(10, 9, 8, 0.72);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  font-family: var(--type-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--emulsion-2);
+  white-space: nowrap;
   pointer-events: none;
 }
 
-.ripple-wave {
-  position: absolute;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  animation: ripple-expand 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+.frame-caption-number {
+  color: var(--safelight-text);
+  font-weight: 600;
 }
 
-.applied-check {
-  font-size: 2.2rem;
-  color: #ffffff;
-  font-weight: 700;
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
-  animation: check-scale 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+.frame-caption-total {
+  color: var(--emulsion-3);
 }
 
-@keyframes apply-pop {
-  0% {
-    transform: scale(1);
-  }
-  45% {
-    transform: scale(1.08);
-  }
-  100% {
-    transform: scale(1.04);
-  }
+.frame-caption-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 8px;
+  border-left: 1px solid var(--edge-strong);
 }
 
-@keyframes ripple-expand {
-  0% {
-    transform: scale(0.2);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(4.5);
-    opacity: 0;
-  }
-}
-
-@keyframes check-scale {
-  0% {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  65% {
-    transform: scale(1.25);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* Carousel Topbar & Settings Trigger */
+/* Settings trigger */
 .carousel-topbar {
   position: absolute;
   top: 20px;
@@ -176,29 +263,56 @@ html, body {
 }
 
 .btn-settings-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  background: rgba(39, 39, 39, 0.85);
-  border: 1px solid rgba(252, 252, 252, 0.12);
-  border-radius: 9999px;
-  color: #fcfcfc;
-  font-size: 12px;
+  height: 32px;
+  padding: 0 8px 0 12px;
+  background: rgba(18, 16, 14, 0.86);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-md);
+  color: var(--emulsion);
+  font-family: var(--type-display);
+  font-size: 13px;
   font-weight: 500;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition:
+    border-color 0.15s var(--ease-out),
+    background-color 0.15s var(--ease-out),
+    transform 0.12s var(--ease-out);
 }
 
 .btn-settings-trigger:hover {
-  background: #333333;
-  border-color: rgba(108, 33, 220, 0.6);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 14px rgba(108, 33, 220, 0.35);
+  background: rgba(32, 28, 24, 0.92);
+  border-color: var(--safelight-edge);
 }
 
 .btn-settings-trigger:active {
-  transform: translateY(0);
+  transform: scale(0.97);
+}
+
+.btn-settings-trigger:focus-visible {
+  outline: 1px solid var(--edge-focus);
+  outline-offset: 2px;
+}
+
+.btn-settings-hint {
+  padding: 2px 6px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--developer-well);
+  font-family: var(--type-mono);
+  font-size: 10px;
+  color: var(--emulsion-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-card {
+    transition: opacity 0.2s linear;
+  }
+
+  .carousel-card.applying img {
+    animation: none;
+  }
 }

@@ -11,6 +11,7 @@ export function TaskbarTab({ settings }: TaskbarTabProps) {
   return (
     <div className="tab-pane">
       <div className="content-header-block">
+        <span className="content-eyebrow">Frame 02</span>
         <h2 className="content-header-title">Taskbar</h2>
         <p className="content-header-subtitle">
           Customize how the Windows taskbar looks. Changes apply instantly, are restored every time Easy Paper starts, and are undone when it quits.

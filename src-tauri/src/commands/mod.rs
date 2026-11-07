@@ -4,6 +4,9 @@ pub mod window_commands;
 pub mod system_commands;
 pub mod taskbar_commands;
 pub mod wallhaven_commands;
+pub mod rotation_commands;
+pub mod stock_commands;
+pub mod update_commands;
 
 pub use config_commands::*;
 pub use wallpaper_commands::*;
@@ -11,3 +14,6 @@ pub use window_commands::*;
 pub use system_commands::*;
 pub use taskbar_commands::*;
 pub use wallhaven_commands::*;
+pub use rotation_commands::*;
+pub use stock_commands::*;
+pub use update_commands::*;

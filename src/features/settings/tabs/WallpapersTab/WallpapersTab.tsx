@@ -1,5 +1,6 @@
 import { FolderSection } from "./FolderSection";
 import { ShortcutSection } from "./ShortcutSection";
+import { AutoRotateSection } from "./AutoRotateSection";
 import { useAppSettings } from "../../../../hooks/useAppSettings";
 
 interface WallpapersTabProps {
@@ -12,15 +13,18 @@ export function WallpapersTab({ settings }: WallpapersTabProps) {
     loading,
     changeFolder,
     changeShortcut,
+    changeAutoRotate,
+    autoRotateUpdating,
     openFolderExplorer,
   } = settings;
 
   return (
     <div className="tab-pane">
       <div className="content-header-block">
+        <span className="content-eyebrow">Frame 01</span>
         <h2 className="content-header-title">Wallpapers & Shortcuts</h2>
         <p className="content-header-subtitle">
-          Manage your local wallpaper image repository and custom global keyboard shortcut.
+          Manage your local wallpaper folder, automatic rotation, and the global keyboard shortcut.
         </p>
       </div>
 
@@ -35,6 +39,13 @@ export function WallpapersTab({ settings }: WallpapersTabProps) {
         currentShortcut={config.shortcut}
         onUpdateShortcut={changeShortcut}
       />
+
+      <AutoRotateSection
+        value={config.auto_rotate}
+        disabled={loading || autoRotateUpdating}
+        onChange={changeAutoRotate}
+      />
+      
     </div>
   );
 }

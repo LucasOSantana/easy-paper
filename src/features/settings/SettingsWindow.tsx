@@ -31,6 +31,7 @@ export default function SettingsWindow() {
           tabs={tabs}
           activeTabId={activeTabId}
           onSelectTab={setActiveTabId}
+          onFeedback={settings.showFeedback}
         />
 
         <main className="settings-content-viewport">

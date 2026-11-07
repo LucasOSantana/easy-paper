@@ -12,7 +12,11 @@ pub fn enable_windows_autostart() {
                     "/t",
                     "REG_SZ",
                     "/d",
-                    &format!("\"{}\"", exe_str),
+                    &format!(
+                        "\"{}\" {}",
+                        exe_str,
+                        crate::services::rotation_service::AUTOSTART_ARG
+                    ),
                     "/f",
                 ])
                 .spawn();

@@ -29,6 +29,47 @@ impl From<windows::core::Error> for WallpaperServiceError {
     }
 }
 
+/// Wallpaper currently shown on an active monitor.
+pub struct MonitorWallpaper {
+    /// 1-based position among the active monitors.
+    pub monitor: u32,
+    pub path: std::path::PathBuf,
+}
+
+/// Image currently shown on each active monitor. Monitors showing a solid
+/// color (no image) are left out.
+pub fn current_wallpapers() -> Vec<MonitorWallpaper> {
+    #[cfg(target_os = "windows")]
+    {
+        windows_impl::current_wallpapers()
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Vec::new()
+    }
+}
+
+/// Applies a wallpaper to every active monitor, one at a time. For each monitor
+/// `choose` receives the wallpaper currently shown there (when known) and
+/// returns the image to apply, or `None` to stop. Returns how many monitors
+/// were updated. Falls back to a single desktop-wide wallpaper when the
+/// per-monitor API is unavailable.
+pub fn apply_to_each_monitor(
+    choose: &mut dyn FnMut(Option<&Path>) -> Option<std::path::PathBuf>,
+) -> Result<usize, WallpaperServiceError> {
+    #[cfg(target_os = "windows")]
+    {
+        windows_impl::apply_to_each_monitor(choose)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = choose;
+        Err(WallpaperServiceError::UnsupportedPlatform)
+    }
+}
+
 pub fn set_desktop_wallpaper(
     path: &str,
     target_point: Option<(i32, i32)>,
@@ -47,9 +88,9 @@ pub fn set_desktop_wallpaper(
 
 #[cfg(target_os = "windows")]
 mod windows_impl {
-    use super::WallpaperServiceError;
+    use super::{MonitorWallpaper, WallpaperServiceError};
     use std::ffi::c_void;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
     use windows::core::{HSTRING, PCWSTR, PWSTR};
     use windows::Win32::System::Com::{
@@ -58,7 +99,8 @@ mod windows_impl {
     };
     use windows::Win32::UI::Shell::{DesktopWallpaper, IDesktopWallpaper};
     use windows::Win32::UI::WindowsAndMessaging::{
-        SystemParametersInfoW, SPIF_SENDCHANGE, SPIF_UPDATEINIFILE, SPI_SETDESKWALLPAPER,
+        SystemParametersInfoW, SPIF_SENDCHANGE, SPIF_UPDATEINIFILE, SPI_GETDESKWALLPAPER,
+        SPI_SETDESKWALLPAPER, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS,
     };
 
     struct ComGuard(bool);
@@ -78,15 +120,15 @@ mod windows_impl {
         }
     }
 
-    struct MonitorId(PWSTR);
+    struct CoTaskString(PWSTR);
 
-    impl MonitorId {
+    impl CoTaskString {
         fn as_pcwstr(&self) -> PCWSTR {
             PCWSTR(self.0.as_ptr())
         }
     }
 
-    impl Drop for MonitorId {
+    impl Drop for CoTaskString {
         fn drop(&mut self) {
             if !self.0.is_null() {
                 unsafe { CoTaskMemFree(Some(self.0.as_ptr() as *const c_void)) };
@@ -111,6 +153,126 @@ mod windows_impl {
         }
     }
 
+    pub fn apply_to_each_monitor(
+        choose: &mut dyn FnMut(Option<&Path>) -> Option<PathBuf>,
+    ) -> Result<usize, WallpaperServiceError> {
+        if let Ok(applied) = apply_each_via_com(choose) {
+            if applied > 0 {
+                return Ok(applied);
+            }
+        }
+
+        match choose(None) {
+            Some(path) => set_wallpaper(&path, None).map(|_| 1),
+            None => Ok(0),
+        }
+    }
+
+    fn apply_each_via_com(
+        choose: &mut dyn FnMut(Option<&Path>) -> Option<PathBuf>,
+    ) -> windows::core::Result<usize> {
+        let _com = ComGuard::new();
+
+        let desktop_wallpaper: IDesktopWallpaper =
+            unsafe { CoCreateInstance(&DesktopWallpaper, None, CLSCTX_ALL)? };
+
+        let count = unsafe { desktop_wallpaper.GetMonitorDevicePathCount()? };
+        let mut applied = 0;
+
+        for i in 0..count {
+            let Ok(raw_id) = (unsafe { desktop_wallpaper.GetMonitorDevicePathAt(i) }) else {
+                continue;
+            };
+            let id = CoTaskString(raw_id);
+
+            // Detached monitors are still listed but have no rectangle.
+            if unsafe { desktop_wallpaper.GetMonitorRECT(id.as_pcwstr()) }.is_err() {
+                continue;
+            }
+
+            let current = read_monitor_wallpaper(&desktop_wallpaper, &id);
+
+            let Some(next) = choose(current.as_deref()) else {
+                break;
+            };
+
+            let canonical = dunce::canonicalize(&next).unwrap_or(next);
+            let wallpaper = HSTRING::from(canonical.as_os_str());
+
+            if unsafe { desktop_wallpaper.SetWallpaper(id.as_pcwstr(), PCWSTR(wallpaper.as_ptr())) }
+                .is_ok()
+            {
+                applied += 1;
+            }
+        }
+
+        Ok(applied)
+    }
+
+    fn read_monitor_wallpaper(dw: &IDesktopWallpaper, id: &CoTaskString) -> Option<PathBuf> {
+        unsafe { dw.GetWallpaper(id.as_pcwstr()) }
+            .ok()
+            .map(CoTaskString)
+            .and_then(|value| unsafe { value.0.to_string() }.ok())
+            .filter(|value| !value.trim().is_empty())
+            .map(PathBuf::from)
+    }
+
+    pub fn current_wallpapers() -> Vec<MonitorWallpaper> {
+        match current_via_com() {
+            Ok(list) if !list.is_empty() => list,
+            _ => current_via_spi()
+                .map(|path| vec![MonitorWallpaper { monitor: 1, path }])
+                .unwrap_or_default(),
+        }
+    }
+
+    fn current_via_com() -> windows::core::Result<Vec<MonitorWallpaper>> {
+        let _com = ComGuard::new();
+
+        let desktop_wallpaper: IDesktopWallpaper =
+            unsafe { CoCreateInstance(&DesktopWallpaper, None, CLSCTX_ALL)? };
+
+        let count = unsafe { desktop_wallpaper.GetMonitorDevicePathCount()? };
+        let mut list = Vec::new();
+        let mut active = 0;
+
+        for i in 0..count {
+            let Ok(raw_id) = (unsafe { desktop_wallpaper.GetMonitorDevicePathAt(i) }) else {
+                continue;
+            };
+            let id = CoTaskString(raw_id);
+
+            if unsafe { desktop_wallpaper.GetMonitorRECT(id.as_pcwstr()) }.is_err() {
+                continue;
+            }
+            active += 1;
+
+            if let Some(path) = read_monitor_wallpaper(&desktop_wallpaper, &id) {
+                list.push(MonitorWallpaper { monitor: active, path });
+            }
+        }
+
+        Ok(list)
+    }
+
+    fn current_via_spi() -> Option<PathBuf> {
+        let mut buffer = [0u16; 1024];
+        unsafe {
+            SystemParametersInfoW(
+                SPI_GETDESKWALLPAPER,
+                buffer.len() as u32,
+                Some(buffer.as_mut_ptr() as *mut c_void),
+                SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0),
+            )
+            .ok()?;
+        }
+
+        let len = buffer.iter().position(|&c| c == 0).unwrap_or(buffer.len());
+        let value = String::from_utf16_lossy(&buffer[..len]);
+        (!value.trim().is_empty()).then(|| PathBuf::from(value))
+    }
+
     fn set_via_com(
         wallpaper: &HSTRING,
         target_point: Option<(i32, i32)>,
@@ -127,7 +289,7 @@ mod windows_impl {
 
         let monitor_ptr = monitor
             .as_ref()
-            .map(MonitorId::as_pcwstr)
+            .map(CoTaskString::as_pcwstr)
             .unwrap_or(PCWSTR::null());
 
         unsafe { desktop_wallpaper.SetWallpaper(monitor_ptr, PCWSTR(wallpaper.as_ptr())) }
@@ -136,11 +298,11 @@ mod windows_impl {
     fn find_target_monitor(
         dw: &IDesktopWallpaper,
         (px, py): (i32, i32),
-    ) -> windows::core::Result<Option<MonitorId>> {
+    ) -> windows::core::Result<Option<CoTaskString>> {
         let count = unsafe { dw.GetMonitorDevicePathCount()? };
 
         for i in 0..count {
-            let id = MonitorId(unsafe { dw.GetMonitorDevicePathAt(i)? });
+            let id = CoTaskString(unsafe { dw.GetMonitorDevicePathAt(i)? });
             let rect = unsafe { dw.GetMonitorRECT(id.as_pcwstr())? };
 
             if px >= rect.left && px < rect.right && py >= rect.top && py < rect.bottom {

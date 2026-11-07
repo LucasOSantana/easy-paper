@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!--
+    Easy Paper / Darkroom icon
+    A solid safelight-red film frame (sprocket holes cut through, transparent)
+    holding a simple landscape: "a picture on film" = wallpapers.
+    No background plate: the shape itself is the icon.
+    Regenerate all sizes with: npx tauri icon src-tauri/icons/icon-source.svg
+    then run: cargo clean -p easy-paper (inside src-tauri) before building.
+  -->
+  <defs>
+    <linearGradient id="frameFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DE4A32" />
+      <stop offset="1" stop-color="#B02A17" />
+    </linearGradient>
+    <linearGradient id="paperFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FBF6EE" />
+      <stop offset="1" stop-color="#EDE4D6" />
+    </linearGradient>
+    <mask id="sprockets">
+      <rect width="1024" height="1024" fill="#fff" />
+      <g fill="#000">
+        <rect x="184" y="156" width="56" height="72" rx="18" />
+        <rect x="184" y="316" width="56" height="72" rx="18" />
+        <rect x="184" y="476" width="56" height="72" rx="18" />
+        <rect x="184" y="636" width="56" height="72" rx="18" />
+        <rect x="184" y="796" width="56" height="72" rx="18" />
+        <rect x="784" y="156" width="56" height="72" rx="18" />
+        <rect x="784" y="316" width="56" height="72" rx="18" />
+        <rect x="784" y="476" width="56" height="72" rx="18" />
+        <rect x="784" y="636" width="56" height="72" rx="18" />
+        <rect x="784" y="796" width="56" height="72" rx="18" />
+      </g>
+    </mask>
+    <clipPath id="window">
+      <rect x="292" y="192" width="440" height="640" rx="28" />
+    </clipPath>
+  </defs>
+
+  <!-- Film frame -->
+  <rect x="152" y="112" width="720" height="800" rx="80" fill="url(#frameFill)" mask="url(#sprockets)" />
+
+  <!-- The picture -->
+  <rect x="292" y="192" width="440" height="640" rx="28" fill="url(#paperFill)" />
+  <g clip-path="url(#window)">
+    <circle cx="624" cy="320" r="56" fill="#D9452E" />
+    <path d="M280 840 L280 676 L408 540 L492 630 L614 478 L744 650 L744 840 Z" fill="#8F2213" />
+  </g>
+</svg>
