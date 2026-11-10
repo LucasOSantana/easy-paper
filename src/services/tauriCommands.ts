@@ -92,4 +92,9 @@ export const TauriService = {
   async checkForUpdates(): Promise<UpdateInfo> {
     return invoke<UpdateInfo>("check_for_updates");
   },
+
+  /** Downloads and runs the installer. On success the app closes, so this only resolves on failure. */
+  async installUpdate(): Promise<void> {
+    return invoke("install_update");
+  },
 };

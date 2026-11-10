@@ -1,141 +1,164 @@
-//! Checks GitHub Releases for a newer version of Easy Paper.
+//! In-app updates through `tauri-plugin-updater`.
 //!
-//! Uses the public, unauthenticated GitHub API (60 requests/hour per IP), so it
-//! runs once when the app starts plus whenever the user asks. Drafts and
-//! pre-releases are ignored by the `releases/latest` endpoint, so a version can
-//! be tested as a pre-release without notifying anyone.
+//! The updater reads `latest.json` from the latest GitHub release (endpoint and
+//! public key live in `tauri.conf.json` under `plugins.updater`). Drafts and
+//! pre-releases are not served by `releases/latest`, so a version can be tested
+//! as a pre-release without notifying anyone.
+//!
+//! Every installer is verified against the public key before it runs. On
+//! Windows the plugin starts the MSI and exits the app with
+//! `std::process::exit`, which skips `RunEvent::Exit`, so the taskbar is
+//! restored in `on_before_exit` instead.
 
 use std::sync::Mutex;
 
-use serde::Deserialize;
+use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_updater::{Update, UpdaterExt};
 
 use crate::models::UpdateInfo;
-use crate::services::http_client::AGENT;
+use crate::services::taskbar_service::set_taskbar_transparency;
 
-const LATEST_RELEASE_URL: &str = "https://api.github.com/repos/LucasOSantana/easy-paper/releases/latest";
 const RELEASES_PREFIX: &str = "https://github.com/LucasOSantana/easy-paper/releases/";
 
 /// Event sent to open windows when the startup check finishes.
 pub const UPDATE_EVENT: &str = "update-status";
+/// Event sent while the installer is being downloaded.
+pub const UPDATE_PROGRESS_EVENT: &str = "update-progress";
 
-/// Result of the most recent successful check.
-pub struct UpdateState(pub Mutex<Option<UpdateInfo>>);
-
-#[derive(Deserialize)]
-struct Release {
-    tag_name: String,
-    html_url: String,
-    #[serde(default)]
-    assets: Vec<ReleaseAsset>,
+/// Result of the most recent successful check, plus the update itself so it
+/// can be installed without checking again.
+pub struct UpdateState {
+    info: Mutex<Option<UpdateInfo>>,
+    pending: Mutex<Option<Update>>,
+    installing: Mutex<bool>,
 }
 
-#[derive(Deserialize)]
-struct ReleaseAsset {
-    name: String,
-    browser_download_url: String,
+impl UpdateState {
+    pub fn new() -> Self {
+        Self { info: Mutex::new(None), pending: Mutex::new(None), installing: Mutex::new(false) }
+    }
+
+    pub fn info(&self) -> Option<UpdateInfo> {
+        self.info.lock().unwrap().clone()
+    }
 }
 
-/// Runs the startup check in the background. Failures (offline, rate limit)
-/// are only logged: the user can still check manually.
+#[derive(Clone, Serialize)]
+struct DownloadProgress {
+    downloaded: u64,
+    total: Option<u64>,
+}
+
+/// Runs the startup check in the background. Failures (offline, no release
+/// yet) are only logged: the user can still check manually.
 pub fn check_on_startup(app: AppHandle) {
-    std::thread::spawn(move || match check_for_updates(&app) {
-        Ok(info) => {
-            let _ = app.emit(UPDATE_EVENT, &info);
+    tauri::async_runtime::spawn(async move {
+        match check_for_updates(&app).await {
+            Ok(info) => {
+                let _ = app.emit(UPDATE_EVENT, &info);
+            }
+            Err(err) => eprintln!("[update] Startup check failed: {}", err),
         }
-        Err(err) => eprintln!("[update] Startup check failed: {}", err),
     });
 }
 
-/// Fetches the latest release, caches the result and returns it.
-pub fn check_for_updates(app: &AppHandle) -> Result<UpdateInfo, String> {
+/// Fetches `latest.json`, caches the result and returns it.
+pub async fn check_for_updates(app: &AppHandle) -> Result<UpdateInfo, String> {
     let current_version = app.package_info().version.to_string();
-    let release = fetch_latest_release()?;
-    let info = build_update_info(&current_version, release);
+    // `install` exits the process on Windows, skipping `RunEvent::Exit`.
+    let exit_app = app.clone();
+    let update = app
+        .updater_builder()
+        .on_before_exit(move || {
+            let _ = set_taskbar_transparency(&exit_app, false);
+        })
+        .build()
+        .map_err(|e| format!("The updater is not configured: {}", e))?
+        .check()
+        .await
+        .map_err(describe_error)?;
 
-    if let Some(state) = app.try_state::<UpdateState>() {
-        *state.0.lock().unwrap() = Some(info.clone());
-    }
+    let info = match &update {
+        Some(update) => UpdateInfo {
+            current_version,
+            latest_version: update.version.clone(),
+            update_available: true,
+            release_url: release_url(&update.version),
+            notes: update.body.clone().filter(|notes| !notes.trim().is_empty()),
+        },
+        None => UpdateInfo {
+            latest_version: current_version.clone(),
+            release_url: format!("{RELEASES_PREFIX}latest"),
+            current_version,
+            update_available: false,
+            notes: None,
+        },
+    };
+
+    let state = app.state::<UpdateState>();
+    *state.info.lock().unwrap() = Some(info.clone());
+    *state.pending.lock().unwrap() = update;
     Ok(info)
 }
 
-fn fetch_latest_release() -> Result<Release, String> {
-    AGENT
-        .get(LATEST_RELEASE_URL)
-        .header("Accept", "application/vnd.github+json")
-        .header("X-GitHub-Api-Version", "2022-11-28")
-        .call()
-        .map_err(describe_error)?
-        .body_mut()
-        .read_json()
-        .map_err(describe_error)
+/// Downloads the pending update, verifies its signature and runs the
+/// installer. On Windows this does not return on success: the app exits and
+/// the installer restarts it once it is done.
+pub async fn install_update(app: &AppHandle) -> Result<(), String> {
+    let state = app.state::<UpdateState>();
+    {
+        let mut installing = state.installing.lock().unwrap();
+        if *installing {
+            return Err("The update is already being installed.".to_string());
+        }
+        *installing = true;
+    }
+
+    let result = download_and_install(app).await;
+    *state.installing.lock().unwrap() = false;
+    result
 }
 
-fn build_update_info(current_version: &str, release: Release) -> UpdateInfo {
-    let latest_version = release.tag_name.trim().trim_start_matches(['v', 'V']).to_string();
-    let update_available = is_newer(&latest_version, current_version);
+async fn download_and_install(app: &AppHandle) -> Result<(), String> {
+    // The cached update came from a check that may be hours old: check again
+    // so we never install something that was since replaced.
+    check_for_updates(app).await?;
+    let update = app
+        .state::<UpdateState>()
+        .pending
+        .lock()
+        .unwrap()
+        .clone()
+        .ok_or_else(|| "You're already on the latest version.".to_string())?;
 
-    // Only trust links that point to this repository's releases.
-    let release_url = if release.html_url.starts_with(RELEASES_PREFIX) {
-        release.html_url
+    let mut downloaded = 0u64;
+    let bytes = update
+        .download(
+            |chunk, total| {
+                downloaded += chunk as u64;
+                let _ = app.emit(UPDATE_PROGRESS_EVENT, DownloadProgress { downloaded, total });
+            },
+            || {},
+        )
+        .await
+        .map_err(|e| format!("Could not download the update: {}", e))?;
+
+    update.install(bytes).map_err(|e| format!("Could not install the update: {}", e))
+}
+
+fn release_url(version: &str) -> String {
+    format!("{RELEASES_PREFIX}tag/v{}", version.trim_start_matches(['v', 'V']))
+}
+
+fn describe_error(error: tauri_plugin_updater::Error) -> String {
+    let message = error.to_string();
+    if message.contains("404") {
+        "No update information was published for the latest release yet.".to_string()
+    } else if message.contains("403") || message.contains("429") {
+        "GitHub's request limit was reached. Try again in a while.".to_string()
     } else {
-        format!("{RELEASES_PREFIX}latest")
-    };
-
-    let installer = |extension: &str| {
-        release
-            .assets
-            .iter()
-            .find(|asset| {
-                asset.name.to_ascii_lowercase().ends_with(extension)
-                    && asset.browser_download_url.starts_with(RELEASES_PREFIX)
-            })
-            .map(|asset| asset.browser_download_url.clone())
-    };
-
-    UpdateInfo {
-        current_version: current_version.to_string(),
-        latest_version,
-        update_available,
-        release_url,
-        download_url: installer(".msi").or_else(|| installer(".exe")),
-    }
-}
-
-/// Compares dotted numeric versions ("1.10.0" > "1.9.2"). Any suffix such as
-/// "-beta.1" is ignored; missing parts count as zero.
-fn is_newer(candidate: &str, current: &str) -> bool {
-    fn parts(version: &str) -> Vec<u64> {
-        version
-            .split(['-', '+'])
-            .next()
-            .unwrap_or_default()
-            .split('.')
-            .map(|part| part.trim().parse().unwrap_or(0))
-            .collect()
-    }
-
-    let (a, b) = (parts(candidate), parts(current));
-    let len = a.len().max(b.len());
-    let at = |v: &Vec<u64>, i: usize| v.get(i).copied().unwrap_or(0);
-
-    for i in 0..len {
-        match at(&a, i).cmp(&at(&b, i)) {
-            std::cmp::Ordering::Greater => return true,
-            std::cmp::Ordering::Less => return false,
-            std::cmp::Ordering::Equal => {}
-        }
-    }
-    false
-}
-
-fn describe_error(error: ureq::Error) -> String {
-    match error {
-        ureq::Error::StatusCode(404) => "No releases have been published yet.".to_string(),
-        ureq::Error::StatusCode(403) | ureq::Error::StatusCode(429) => {
-            "GitHub's request limit was reached. Try again in a while.".to_string()
-        }
-        error => format!("Could not reach GitHub: {}", error),
+        format!("Could not check for updates: {}", message)
     }
 }
 
@@ -144,51 +167,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn compares_versions_numerically() {
-        assert!(is_newer("1.3.0", "1.2.0"));
-        assert!(is_newer("1.10.0", "1.9.9"));
-        assert!(is_newer("2.0", "1.99.99"));
-        assert!(!is_newer("1.2.0", "1.2.0"));
-        assert!(!is_newer("1.2", "1.2.0"));
-        assert!(!is_newer("1.1.9", "1.2.0"));
-        assert!(!is_newer("1.2.0-beta.1", "1.2.0"));
-    }
-
-    fn release(tag: &str, assets: &[(&str, &str)]) -> Release {
-        Release {
-            tag_name: tag.to_string(),
-            html_url: format!("{RELEASES_PREFIX}tag/{tag}"),
-            assets: assets
-                .iter()
-                .map(|(name, url)| ReleaseAsset {
-                    name: name.to_string(),
-                    browser_download_url: url.to_string(),
-                })
-                .collect(),
-        }
-    }
-
-    #[test]
-    fn picks_the_msi_from_this_repository() {
-        let msi = format!("{RELEASES_PREFIX}download/v1.3.0/Easy.Paper_1.3.0_x64_en-US.msi");
-        let info = build_update_info(
-            "1.2.0",
-            release("v1.3.0", &[("notes.txt", "https://example.com/n"), ("Easy.Paper_1.3.0_x64_en-US.msi", &msi)]),
-        );
-
-        assert!(info.update_available);
-        assert_eq!(info.latest_version, "1.3.0");
-        assert_eq!(info.download_url.as_deref(), Some(msi.as_str()));
-    }
-
-    #[test]
-    fn ignores_installers_hosted_elsewhere() {
-        let info = build_update_info("1.2.0", release("v1.3.0", &[("evil.msi", "https://example.com/evil.msi")]));
-        assert_eq!(info.download_url, None);
-    }
-
-    #[test]
-    fn same_version_is_not_an_update() {
-        assert!(!build_update_info("1.2.0", release("v1.2.0", &[])).update_available);
+    fn release_url_points_to_the_tag() {
+        assert_eq!(release_url("1.4.0"), format!("{RELEASES_PREFIX}tag/v1.4.0"));
+        assert_eq!(release_url("v1.4.0"), format!("{RELEASES_PREFIX}tag/v1.4.0"));
     }
 }

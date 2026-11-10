@@ -22,7 +22,7 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
   - [Wallhaven](https://wallhaven.cc): works right away, filtering by sorting, aspect ratio and your screen resolution.
   - [Unsplash](https://unsplash.com) and [Pexels](https://www.pexels.com): use your own free API key (see [Online Sources](#online-sources)).
 - **Transparent Taskbar (Windows 11)**: Removes the taskbar background so your wallpaper shows through, similar to TranslucentTB. Reverted when Easy Paper quits.
-- **Update Notifications**: Checks GitHub Releases once when the app starts and shows a download link in the Settings sidebar when a new version is out. You can also check manually with **Check for updates**.
+- **In-App Updates**: Checks for a new version once when the app starts (or manually with **Check for updates**). When one is out, **Install & restart** in the Settings sidebar downloads it, verifies its signature and installs it, no manual download needed.
 - **Starts with Windows**: Registers itself to launch at sign-in, so the shortcut and automatic rotation are always available.
 - **System Tray Integration**: Resides discreetly in the Windows system tray / notification area with options to add pictures, open settings, reload the shortcut, or quit.
 
@@ -139,16 +139,31 @@ Free limits: Unsplash demo keys allow 50 requests per hour, and Pexels allows 20
 
 ### Releasing
 
-The in-app update check reads the **latest** release of this repository from the GitHub API, so every release must follow these steps:
+Installed copies update themselves: the app reads `latest.json` from the **latest** GitHub release, downloads the installer, checks its signature and installs it (**Settings > Install & restart**). Releases are built by the `Release` GitHub Actions workflow.
+
+#### One-time setup
+
+1. Generate the signing key pair (choose a password and keep the private key safe; losing it means installed apps can no longer update):
+   ```bash
+   npm run tauri signer generate -- -w "$HOME/.tauri/easy-paper.key"
+   ```
+2. Paste the contents of `~/.tauri/easy-paper.key.pub` into `plugins.updater.pubkey` in `src-tauri/tauri.conf.json`.
+3. In the GitHub repository, go to **Settings > Secrets and variables > Actions** and add:
+   - `TAURI_SIGNING_PRIVATE_KEY`: the contents of `~/.tauri/easy-paper.key`
+   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: the password from step 1
+
+#### Every release
 
 1. Update the version in all three files, keeping them identical:
    - `package.json`
    - `src-tauri/tauri.conf.json` (the version the app reports and compares)
    - `src-tauri/Cargo.toml`
-2. Build the installer with `npm run tauri build`.
-3. Create a GitHub release with the tag `vX.Y.Z` (for example `v1.3.0`), mark it as the latest release, and attach the `.msi` installer.
+2. Commit, then push a tag `vX.Y.Z` (for example `git tag v1.4.0 && git push origin v1.4.0`).
+3. The workflow creates a **draft** release with the `.msi`, its `.sig` and `latest.json`. Review it and click **Publish release**: installed apps see the update from then on.
 
 Drafts and pre-releases are ignored by the update check, so a version can be published as a pre-release for testing without notifying users.
+
+To build locally instead, set `TAURI_SIGNING_PRIVATE_KEY` (and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) before `npm run tauri build`; you then have to write `latest.json` yourself.
 
 ### App Icon
 

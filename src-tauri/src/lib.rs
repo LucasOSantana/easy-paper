@@ -29,9 +29,10 @@ use commands::*;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(WindowDisplayState(Mutex::new(Instant::now())))
         .manage(RotationState::new())
-        .manage(UpdateState(Mutex::new(None)))
+        .manage(UpdateState::new())
         .setup(|app| {
             let app_config = load_config(app);
             let initial_shortcut = app_config.shortcut.clone();
@@ -121,7 +122,8 @@ pub fn run() {
             search_stock,
             download_stock,
             get_update_status,
-            check_for_updates
+            check_for_updates,
+            install_update
         ])
         .build(tauri::generate_context!())
         .expect("Fatal error while executing Tauri application")

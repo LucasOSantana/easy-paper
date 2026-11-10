@@ -3,5 +3,10 @@ export interface UpdateInfo {
   latest_version: string;
   update_available: boolean;
   release_url: string;
-  download_url: string | null;
+  notes: string | null;
+}
+
+export interface UpdateProgress {
+  downloaded: number;
+  total: number | null;
 }
