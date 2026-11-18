@@ -129,23 +129,35 @@ fn tap_dll_path<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<PathBuf,
     let bundled = app
         .path()
         .resource_dir()
-        .map_err(|e| format!("Failed to locate application resources: {}", e))?
+        .map_err(|e| crate::tr!(
+            en: format!("Could not find the app resources: {}", e),
+            pt: format!("Não foi possível encontrar os recursos do app: {}", e),
+        ))?
         .join(TAP_DLL_NAME);
     let bytes = fs::read(&bundled)
-        .map_err(|e| format!("Taskbar component not found at \"{}\": {}", bundled.display(), e))?;
+        .map_err(|e| crate::tr!(
+            en: format!("Taskbar component not found at \"{}\": {}", bundled.display(), e),
+            pt: format!("Componente da barra de tarefas não encontrado em \"{}\": {}", bundled.display(), e),
+        ))?;
 
     let mut hasher = DefaultHasher::new();
     bytes.hash(&mut hasher);
     let directory = app
         .path()
         .app_local_data_dir()
-        .map_err(|e| format!("Failed to obtain application data directory: {}", e))?;
+        .map_err(|e| crate::tr!(
+            en: format!("Could not find the app data folder: {}", e),
+            pt: format!("Não foi possível encontrar a pasta de dados do app: {}", e),
+        ))?;
     let copy = directory.join(format!("taskbar_tap-{:016x}.dll", hasher.finish()));
 
     if !copy.is_file() {
         fs::create_dir_all(&directory)
             .and_then(|_| fs::write(&copy, &bytes))
-            .map_err(|e| format!("Failed to prepare the taskbar component: {}", e))?;
+            .map_err(|e| crate::tr!(
+                en: format!("Could not prepare the taskbar component: {}", e),
+                pt: format!("Não foi possível preparar o componente da barra de tarefas: {}", e),
+            ))?;
     }
 
     for entry in fs::read_dir(&directory).into_iter().flatten().flatten() {
@@ -184,7 +196,10 @@ fn wait_until_tap_ready() -> Result<(), String> {
     let deadline = Instant::now() + TAP_READY_TIMEOUT;
     while control_windows().is_empty() {
         if Instant::now() >= deadline {
-            return Err("The taskbar component was loaded but did not find the taskbar".to_string());
+            return Err(crate::tr!(
+                en: "The taskbar component was loaded but did not find the taskbar.",
+                pt: "O componente foi carregado, mas não encontrou a barra de tarefas.",
+            ));
         }
         std::thread::sleep(TAP_READY_POLL_INTERVAL);
     }
@@ -194,11 +209,17 @@ fn wait_until_tap_ready() -> Result<(), String> {
 fn inject_into_explorer(tap_dll: &Path) -> Result<(), String> {
     let mut explorer_pid = 0;
     let taskbar = unsafe { FindWindowW(w!("Shell_TrayWnd"), PCWSTR::null()) }
-        .map_err(|_| "Windows taskbar was not found. Is Explorer running?")?;
+        .map_err(|_| crate::tr!(
+            en: "The Windows taskbar was not found. Is Explorer running?",
+            pt: "A barra de tarefas do Windows não foi encontrada. O Explorer está em execução?",
+        ))?;
     unsafe { GetWindowThreadProcessId(taskbar, Some(&mut explorer_pid)) };
 
     let xaml = unsafe { LoadLibraryExW(w!("Windows.UI.Xaml.dll"), None, LOAD_LIBRARY_SEARCH_SYSTEM32) }
-        .map_err(|e| format!("Failed to load the Windows XAML runtime: {}", e))?;
+        .map_err(|e| crate::tr!(
+            en: format!("Could not load the Windows XAML runtime: {}", e),
+            pt: format!("Não foi possível carregar o runtime XAML do Windows: {}", e),
+        ))?;
     let com_initialized = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) }.is_ok();
 
     let result = match unsafe { GetProcAddress(xaml, s!("InitializeXamlDiagnosticsEx")) } {
@@ -222,9 +243,15 @@ fn inject_into_explorer(tap_dll: &Path) -> Result<(), String> {
                 }
                 std::thread::sleep(INJECT_RETRY_DELAY);
             }
-            result.ok().map_err(|e| format!("Failed to attach to the Windows taskbar: {}", e))
+            result.ok().map_err(|e| crate::tr!(
+                en: format!("Could not attach to the Windows taskbar: {}", e),
+                pt: format!("Não foi possível se conectar à barra de tarefas do Windows: {}", e),
+            ))
         }
-        None => Err("This version of Windows does not support XAML diagnostics".to_string()),
+        None => Err(crate::tr!(
+            en: "This version of Windows does not support XAML diagnostics.",
+            pt: "Esta versão do Windows não oferece suporte ao diagnóstico XAML.",
+        )),
     };
 
     let _ = unsafe { FreeLibrary(xaml) };

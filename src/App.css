@@ -307,12 +307,409 @@ html, body {
   color: var(--emulsion-3);
 }
 
+/* Square variant of the top-bar button (shortcuts) */
+.btn-settings-trigger.btn-icon-only {
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+  font-family: var(--type-mono);
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Search & filter toolbar                                            */
+/* ------------------------------------------------------------------ */
+
+.carousel-toolbar {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.carousel-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 260px;
+  height: 32px;
+  padding: 0 6px 0 10px;
+  box-sizing: border-box;
+  background: rgba(12, 10, 9, 0.88);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-md);
+  color: var(--emulsion-3);
+  cursor: text;
+  transition:
+    border-color 0.15s var(--ease-out),
+    box-shadow 0.15s var(--ease-out);
+}
+
+.carousel-search:focus-within {
+  border-color: var(--safelight);
+  box-shadow: 0 0 0 3px var(--safelight-wash);
+  color: var(--emulsion-2);
+}
+
+.carousel-search.has-query {
+  border-color: var(--safelight-edge);
+}
+
+.carousel-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--type-body);
+  font-size: 13px;
+  color: var(--emulsion);
+  user-select: text;
+}
+
+.carousel-search input::placeholder {
+  color: var(--emulsion-4);
+}
+
+.carousel-search-clear,
+.shortcut-legend-close {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--emulsion-3);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.carousel-search-clear:hover,
+.shortcut-legend-close:hover {
+  background: var(--tray-raised);
+  color: var(--emulsion);
+}
+
+.carousel-filter {
+  display: inline-flex;
+  gap: 2px;
+  height: 32px;
+  padding: 2px;
+  box-sizing: border-box;
+  background: rgba(12, 10, 9, 0.88);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-md);
+}
+
+.carousel-filter button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--type-display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--emulsion-3);
+  cursor: pointer;
+  transition:
+    background-color 0.15s var(--ease-out),
+    color 0.15s var(--ease-out);
+}
+
+.carousel-filter button:hover {
+  color: var(--emulsion);
+}
+
+.carousel-filter button.on {
+  background: var(--tray-raised);
+  color: var(--emulsion);
+  box-shadow: inset 0 0 0 1px var(--edge-strong);
+}
+
+.carousel-filter button.on svg {
+  color: var(--safelight-text);
+}
+
+.carousel-filter button:focus-visible {
+  outline: 1px solid var(--edge-focus);
+  outline-offset: 1px;
+}
+
+.carousel-filter-count {
+  font-family: var(--type-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--emulsion-4);
+}
+
+.carousel-empty-hint {
+  font-family: var(--type-mono);
+  font-size: 11px;
+  color: var(--emulsion-3);
+}
+
+/* ------------------------------------------------------------------ */
+/* Favorites on cards                                                 */
+/* ------------------------------------------------------------------ */
+
+.card-favorite {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: rgba(10, 9, 8, 0.72);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-md);
+  color: var(--emulsion-2);
+  cursor: pointer;
+  transition:
+    color 0.15s var(--ease-out),
+    border-color 0.15s var(--ease-out),
+    transform 0.12s var(--ease-out);
+}
+
+.card-favorite:hover {
+  color: var(--emulsion);
+  border-color: var(--safelight-edge);
+}
+
+.card-favorite:active {
+  transform: scale(0.92);
+}
+
+.card-favorite.on {
+  color: var(--safelight-text);
+  border-color: var(--safelight-edge);
+}
+
+.card-favorite-mark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  padding: 4px;
+  background: rgba(10, 9, 8, 0.72);
+  border-radius: var(--radius-sm);
+  color: var(--safelight-text);
+  pointer-events: none;
+}
+
+.frame-caption-name svg {
+  margin-right: 6px;
+  vertical-align: -1px;
+  color: var(--safelight-text);
+}
+
+/* Waiting for the delete confirmation */
+.carousel-card.pending-delete {
+  box-shadow:
+    0 0 0 1px var(--spoiled),
+    0 0 0 5px var(--rebate),
+    0 0 0 6px var(--spoiled-edge),
+    0 28px 64px rgba(0, 0, 0, 0.8);
+}
+
+.carousel-card.pending-delete img {
+  filter: grayscale(0.7) brightness(0.6);
+}
+
+.frame-caption.frame-confirm {
+  align-items: center;
+  max-width: 560px;
+  padding: 4px 4px 4px 12px;
+  border-color: var(--spoiled-edge);
+  pointer-events: auto;
+}
+
+.frame-confirm-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--emulsion-2);
+}
+
+.frame-confirm-text strong {
+  color: var(--emulsion);
+  font-weight: 600;
+}
+
+.frame-confirm button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--type-mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.frame-confirm-yes {
+  background: var(--spoiled-wash);
+  border: 1px solid var(--spoiled-edge);
+  color: var(--spoiled);
+}
+
+.frame-confirm-yes:hover {
+  border-color: var(--spoiled);
+}
+
+.frame-confirm-no {
+  background: transparent;
+  border: 1px solid var(--edge);
+  color: var(--emulsion-2);
+}
+
+.frame-confirm-no:hover {
+  border-color: var(--edge-strong);
+  color: var(--emulsion);
+}
+
+.frame-confirm kbd {
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--emulsion-4);
+}
+
+/* Hints and notices under the caption */
+.carousel-hints,
+.carousel-notice {
+  position: absolute;
+  top: calc(50% + 262px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: var(--type-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.carousel-hints {
+  display: flex;
+  gap: 14px;
+  color: var(--emulsion-3);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.carousel-hints kbd {
+  margin-right: 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: rgba(12, 10, 9, 0.8);
+  font-family: inherit;
+  color: var(--emulsion-2);
+}
+
+.carousel-notice {
+  padding: 4px 10px;
+  background: rgba(10, 9, 8, 0.86);
+  border: 1px solid var(--fixed-edge);
+  border-radius: var(--radius-sm);
+  color: var(--fixed);
+  animation: label-in 0.2s var(--ease-out) both;
+}
+
+.carousel-notice.error {
+  border-color: var(--spoiled-edge);
+  color: var(--spoiled);
+}
+
+/* ------------------------------------------------------------------ */
+/* Shortcut legend                                                    */
+/* ------------------------------------------------------------------ */
+
+.shortcut-legend {
+  position: absolute;
+  top: 64px;
+  right: 32px;
+  z-index: 1001;
+  width: 280px;
+  padding: 12px 14px;
+  background: rgba(18, 16, 14, 0.96);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-lg);
+  color: var(--emulsion-2);
+  animation: label-in 0.15s var(--ease-out) both;
+}
+
+.shortcut-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.shortcut-legend-title {
+  font-family: var(--type-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--safelight-text);
+}
+
+.shortcut-legend-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcut-legend-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.shortcut-legend-row dt {
+  display: flex;
+  gap: 4px;
+}
+
+.shortcut-legend-row dd {
+  margin: 0;
+}
+
+.shortcut-legend kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--developer-well);
+  font-family: var(--type-mono);
+  font-size: 10px;
+  color: var(--emulsion);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .carousel-card {
     transition: opacity 0.2s linear;
   }
 
   .carousel-card.applying img {
+    animation: none;
+  }
+
+  .carousel-notice,
+  .shortcut-legend {
     animation: none;
   }
 }

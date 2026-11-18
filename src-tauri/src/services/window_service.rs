@@ -131,8 +131,19 @@ pub fn show_settings_window<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     }
 
     let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::default())
-        .title("Easy Paper Settings")
+        .title(settings_window_title())
         .inner_size(860.0, 580.0)
         .center()
         .build();
+}
+
+fn settings_window_title() -> String {
+    crate::tr!(en: "Easy Paper Settings", pt: "Configurações do Easy Paper")
+}
+
+/// Keeps an open Settings window's title in the current language.
+pub fn retitle_settings_window<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("settings") {
+        let _ = window.set_title(&settings_window_title());
+    }
 }

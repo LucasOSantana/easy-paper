@@ -3,6 +3,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { listen } from "@tauri-apps/api/event";
 import { TauriService } from "../services/tauriCommands";
 import { UpdateInfo, UpdateProgress } from "../types/update";
+import { useI18n } from "../i18n/I18nProvider";
 
 type FeedbackHandler = (type: "success" | "error", message: string) => void;
 
@@ -17,6 +18,8 @@ export function useUpdateStatus(onFeedback: FeedbackHandler) {
   const [checking, setChecking] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [progress, setProgress] = useState<UpdateProgress | null>(null);
+  const { m } = useI18n();
+  const t = m.settings.update;
 
   useEffect(() => {
     let cancelled = false;
@@ -47,13 +50,11 @@ export function useUpdateStatus(onFeedback: FeedbackHandler) {
       setInfo(result);
       onFeedback(
         "success",
-        result.update_available
-          ? `Version ${result.latest_version} is available.`
-          : `You're on the latest version (v${result.current_version}).`
+        result.update_available ? t.newVersion(result.latest_version) : t.upToDate(result.current_version)
       );
     } catch (err) {
       console.error(err);
-      onFeedback("error", typeof err === "string" ? err : "Could not check for updates.");
+      onFeedback("error", typeof err === "string" ? err : t.checkFailed);
     } finally {
       setChecking(false);
     }
@@ -67,7 +68,7 @@ export function useUpdateStatus(onFeedback: FeedbackHandler) {
       await TauriService.installUpdate();
     } catch (err) {
       console.error(err);
-      onFeedback("error", typeof err === "string" ? err : "Could not install the update.");
+      onFeedback("error", typeof err === "string" ? err : t.installFailed);
     } finally {
       setInstalling(false);
       setProgress(null);

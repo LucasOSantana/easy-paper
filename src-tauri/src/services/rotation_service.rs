@@ -70,7 +70,7 @@ pub fn start_rotation_worker(app: AppHandle, launched_at_sign_in: bool) {
         if launched_at_sign_in {
             let config = current_rotation_config(&app);
             if config.enabled && config.trigger == RotationTrigger::OnStartup {
-                rotate_on_startup(&app, config.order);
+                rotate_on_startup(&app);
             }
         }
 
@@ -102,7 +102,7 @@ pub fn start_rotation_worker(app: AppHandle, launched_at_sign_in: bool) {
             };
 
             if due {
-                if let Err(err) = rotate_now(&app, config.order) {
+                if let Err(err) = rotate_now(&app) {
                     eprintln!("[rotation] Automatic wallpaper change failed, retrying: {}", err);
                     // E.g. the desktop is not ready right after waking up:
                     // keep the change due so the next tick tries again.
@@ -132,11 +132,11 @@ fn current_rotation_config(app: &AppHandle) -> AutoRotateConfig {
     app.state::<ConfigState>().0.lock().unwrap().auto_rotate.clone()
 }
 
-fn rotate_on_startup(app: &AppHandle, order: RotationOrder) {
+fn rotate_on_startup(app: &AppHandle) {
     thread::sleep(STARTUP_DELAY);
 
     for attempt in 1..=STARTUP_ATTEMPTS {
-        match rotate_now(app, order) {
+        match rotate_now(app) {
             Ok(_) => return,
             Err(err) => {
                 eprintln!("[rotation] Startup change attempt {} failed: {}", attempt, err);
@@ -148,11 +148,30 @@ fn rotate_on_startup(app: &AppHandle, order: RotationOrder) {
     }
 }
 
-/// Picks and applies a new wallpaper on every active monitor.
+/// Changes the wallpaper right away (tray "Next wallpaper") and restarts the
+/// automatic rotation countdown.
+pub fn rotate_next(app: &AppHandle) -> Result<usize, String> {
+    let changed = rotate_now(app)?;
+    reset_rotation_timer(app);
+    Ok(changed)
+}
+
+/// Picks and applies a new wallpaper on every active monitor, following the
+/// rotation settings (order and "favorites only").
 /// Returns how many monitors were changed (0 when the folder is empty).
-pub fn rotate_now(app: &AppHandle, order: RotationOrder) -> Result<usize, String> {
+pub fn rotate_now(app: &AppHandle) -> Result<usize, String> {
+    let (order, favorites) = {
+        let config = app.state::<ConfigState>().0.lock().unwrap().clone();
+        let favorites = if config.auto_rotate.favorites_only {
+            Some(config.favorites)
+        } else {
+            None
+        };
+        (config.auto_rotate.order, favorites)
+    };
+
     let folder = get_images_directory(app);
-    let files = list_image_files(&folder);
+    let files = only_favorites(list_image_files(&folder), favorites.as_deref());
     if files.is_empty() {
         return Ok(0);
     }
@@ -183,6 +202,27 @@ pub fn rotate_now(app: &AppHandle, order: RotationOrder) -> Result<usize, String
     };
 
     apply_to_each_monitor(&mut choose).map_err(|err| err.to_string())
+}
+
+/// Keeps only favorite images when `favorites` is given. Falls back to every
+/// image while none of the favorites is in the folder, so rotation never
+/// stops silently.
+fn only_favorites(files: Vec<PathBuf>, favorites: Option<&[String]>) -> Vec<PathBuf> {
+    let Some(favorites) = favorites else {
+        return files;
+    };
+
+    let picked: Vec<PathBuf> = files
+        .iter()
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| favorites.iter().any(|fav| fav.eq_ignore_ascii_case(name)))
+        })
+        .cloned()
+        .collect();
+
+    if picked.is_empty() { files } else { picked }
 }
 
 /// Next image of the current shuffle cycle, skipping the image already on
@@ -332,6 +372,19 @@ mod tests {
         let (elapsed, due) = advance_timer(hour, hour, interval);
         assert!(!due);
         assert_eq!(elapsed, 2 * hour);
+    }
+
+    #[test]
+    fn favorites_only_keeps_favorites_and_falls_back_when_none_exist() {
+        let all = files(&["a.jpg", "B.jpg", "c.jpg"]);
+
+        let picked = only_favorites(all.clone(), Some(&["b.JPG".to_string()]));
+        assert_eq!(picked, files(&["B.jpg"]));
+
+        let picked = only_favorites(all.clone(), Some(&["gone.jpg".to_string()]));
+        assert_eq!(picked, all, "falls back to the whole folder");
+
+        assert_eq!(only_favorites(all.clone(), None), all);
     }
 
     #[test]

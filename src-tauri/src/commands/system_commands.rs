@@ -1,7 +1,7 @@
 #[tauri::command]
 pub async fn pick_folder() -> Option<String> {
     let result = rfd::AsyncFileDialog::new()
-        .set_title("Select Wallpaper Folder")
+        .set_title(crate::tr!(en: "Select Wallpaper Folder", pt: "Selecione a pasta de papéis de parede"))
         .pick_folder()
         .await;
 

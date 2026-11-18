@@ -16,15 +16,19 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 - **Multi-Monitor & Per-Monitor Support**: Automatically summons on the monitor where your cursor is currently located, applying the selected wallpaper exclusively to that monitor without altering other displays.
 - **High-Performance Thumbnail Caching**: Automatically creates and caches sharp 450x800 Lanczos-filtered thumbnails in a local `.cache/thumbnails` folder, keeping resource usage minimal even with large 4K/8K wallpaper collections.
 - **One-Click Native Wallpaper Switching**: Seamlessly updates your desktop background using Windows Shell COM APIs (`IDesktopWallpaper`) with automatic fallback to `SystemParametersInfoW`, with a short "developing print" animation as feedback.
-- **Automatic Rotation**: Let the wallpaper change on its own, either every time Windows starts or on an interval (15 minutes to 24 hours, or a custom value from 5 minutes to 7 days). Choose **Shuffle** (every wallpaper before any repeats) or **Random**; each monitor gets a different image. Time the PC spends asleep counts toward the interval.
+- **Search & Favorites**: Press `/` in the selector to filter wallpapers by name (any order, ignoring case and accents), `F` to favorite the one in focus and `Tab` to switch between all wallpapers and favorites only.
+- **Keyboard-First Library**: Jump to the first/last wallpaper, focus a random one, move a wallpaper to the Recycle Bin or show it in Explorer without leaving the selector (see [Keyboard Shortcuts](#keyboard-shortcuts)).
+- **Automatic Rotation**: Let the wallpaper change on its own, either every time Windows starts or on an interval (15 minutes to 24 hours, or a custom value from 5 minutes to 7 days). Choose **Shuffle** (every wallpaper before any repeats) or **Random**, from all wallpapers or **favorites only**; each monitor gets a different image. Time the PC spends asleep counts toward the interval.
 - **Original Wallpaper Backup**: On first run, the wallpaper you had before installing Easy Paper is copied into your wallpaper folder as `Original wallpaper.<ext>`, so you can always go back to it. It runs only once and never duplicates an image that is already in the folder.
 - **Online Wallpaper Search**: From **Settings > Online Sources**, search and download straight into your folder from:
   - [Wallhaven](https://wallhaven.cc): works right away, filtering by sorting, aspect ratio and your screen resolution.
   - [Unsplash](https://unsplash.com) and [Pexels](https://www.pexels.com): use your own free API key (see [Online Sources](#online-sources)).
 - **Transparent Taskbar (Windows 11)**: Removes the taskbar background so your wallpaper shows through, similar to TranslucentTB. Reverted when Easy Paper quits.
 - **In-App Updates**: Checks for a new version once when the app starts (or manually with **Check for updates**). When one is out, **Install & restart** in the Settings sidebar downloads it, verifies its signature and installs it, no manual download needed.
+- **English & Portuguese**: The whole app (selector, Settings, tray menu and messages) is available in English and Brazilian Portuguese. By default it follows the Windows display language; change it in **Settings > Appearance**.
 - **Starts with Windows**: Registers itself to launch at sign-in, so the shortcut and automatic rotation are always available.
-- **System Tray Integration**: Resides discreetly in the Windows system tray / notification area with options to add pictures, open settings, reload the shortcut, or quit.
+- **Backup & Sync**: Export your settings and favorites (optionally with every wallpaper) to a folder and restore them later, or keep them in sync across PCs through a folder in OneDrive, Dropbox or Google Drive (see [Backup & Sync](#backup--sync)).
+- **System Tray Integration**: Resides discreetly in the Windows system tray / notification area with options to open the selector, change to the next wallpaper, turn automatic rotation (or favorites-only rotation) on and off, open the wallpaper folder or settings, reload the shortcut, or quit.
 
 ---
 
@@ -34,9 +38,27 @@ A lightweight, local-first, instant wallpaper selector for Windows, inspired by 
 2. **Browse**:
    - Scroll horizontally or vertically with your **mouse wheel**.
    - Navigate using **`Left Arrow` (`←`)** and **`Right Arrow` (`→`)**.
-   - Click directly on any visible side card to focus it.
-3. **Apply**: Click the active card or press `Enter` / `Space`. The print "develops" under the safelight, your Windows wallpaper changes instantly on that monitor, and the selector dismisses itself.
-4. **Dismiss**: Click outside the window or press the global shortcut again to hide it at any time.
+   - Press `/` to search by name, or `Tab` to show only your favorites.
+3. **Apply**: Click a card or press `Enter` / `Space`. The print "develops" under the safelight, your Windows wallpaper changes instantly on that monitor, and the selector dismisses itself.
+4. **Dismiss**: Click outside the window, press `Esc` or press the global shortcut again to hide it at any time.
+
+### Keyboard Shortcuts
+
+| Key | Action |
+| :--- | :--- |
+| `←` / `→`, mouse wheel | Previous / next wallpaper |
+| `Home` / `End` | First / last wallpaper |
+| `Page Up` / `Page Down` | Jump 5 wallpapers |
+| `Enter` / `Space` | Apply the wallpaper in focus |
+| `/` or `Ctrl + F` | Search by file name |
+| `Tab` | Switch between all wallpapers and favorites |
+| `F` | Add or remove the wallpaper in focus from favorites |
+| `R` | Focus a random wallpaper |
+| `Delete` | Move the wallpaper in focus to the Recycle Bin (asks first) |
+| `Ctrl + O` | Show the wallpaper in Explorer |
+| `Ctrl + ,` | Open Settings |
+| `?` | Show all shortcuts |
+| `Esc` | Clear the search, or close the selector |
 
 ---
 
@@ -64,9 +86,16 @@ Everything is saved in a `config.json` file on your machine:
     "enabled": false,
     "trigger": "interval",
     "interval_minutes": 180,
-    "order": "shuffle"
+    "order": "shuffle",
+    "favorites_only": false
   },
-  "original_wallpaper_saved": true
+  "original_wallpaper_saved": true,
+  "favorites": ["mountains.jpg", "night city.png"],
+  "sync": {
+    "folder": ""
+  },
+  "settings_updated_at": 1763470000000,
+  "language": "system"
 }
 ```
 
@@ -81,9 +110,24 @@ Everything is saved in a `config.json` file on your machine:
 | `auto_rotate.trigger` | `string` | `"interval"` | `"interval"` to change every `interval_minutes`, or `"on_startup"` to change once each time Windows starts. |
 | `auto_rotate.interval_minutes` | `number` | `180` | Minutes between changes, from `5` to `10080` (7 days). |
 | `auto_rotate.order` | `string` | `"shuffle"` | `"shuffle"` shows every wallpaper before repeating any; `"random"` picks any wallpaper each time. |
+| `auto_rotate.favorites_only` | `boolean` | `false` | Rotate through favorites only. Uses every wallpaper while there are no favorites. |
+| `favorites` | `string[]` | `[]` | File names (inside `images_path`) marked as favorite. Managed from the selector with `F`. |
+| `sync.folder` | `string` | `""` | Folder used to sync settings between PCs. Empty means sync is off. Set it from **Settings > Backup & Sync**. |
+| `settings_updated_at` | `number` | `0` | Set automatically: time of the last change to the synced settings, used to decide which PC has the newest version. |
+| `language` | `string` | `"system"` | Interface language: `"system"` (follow Windows), `"en"` or `"pt-BR"`. Change it from **Settings > Appearance**. |
 | `original_wallpaper_saved` | `boolean` | `false` | Set automatically after the first-run backup of your original wallpaper. Set it back to `false` to run the backup again on the next start. |
 
 > **Tip**: After editing `config.json` by hand, right-click the tray icon and select **"Reload Shortcut"** to apply a new shortcut without restarting the application.
+
+### Backup & Sync
+
+Open **Settings > Backup & Sync**.
+
+- **Export backup** creates an `Easy Paper backup <date>` folder with `easy-paper-backup.json` (shortcut, taskbar, rotation, language and favorites) and, if **Include wallpaper images** is on, a `wallpapers` folder with a copy of every image.
+- **Restore backup** reads an `easy-paper-backup.json`, replaces those settings and copies back any image from its `wallpapers` folder that is missing from your wallpaper folder. Your wallpaper folder location is never changed.
+- **Sync between PCs**: choose a folder that a cloud app syncs (OneDrive, Dropbox, Google Drive). Easy Paper keeps `easy-paper-sync.json` in it, checks it every minute and whenever you change a setting, and the newest change wins. When the folder already has settings from another PC, you choose which ones to keep.
+
+Wallpaper images are not synced. To have the same images on every PC, keep your wallpaper folder inside the same cloud folder.
 
 ### Online Sources
 

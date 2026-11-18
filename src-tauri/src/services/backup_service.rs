@@ -54,7 +54,10 @@ pub fn save_original_wallpaper_once(app: &AppHandle) {
 /// Copies the image of every monitor into `folder`, skipping images whose
 /// content is already there. Returns the files created.
 fn backup_current_wallpapers(folder: &Path) -> Result<Vec<PathBuf>, String> {
-    fs::create_dir_all(folder).map_err(|e| format!("Cannot create {}: {}", folder.display(), e))?;
+    fs::create_dir_all(folder).map_err(|e| crate::tr!(
+        en: format!("Cannot create {}: {}", folder.display(), e),
+        pt: format!("Não foi possível criar {}: {}", folder.display(), e),
+    ))?;
 
     let wallpapers = current_wallpapers();
     let multiple = wallpapers.len() > 1;
@@ -83,7 +86,10 @@ fn backup_current_wallpapers(folder: &Path) -> Result<Vec<PathBuf>, String> {
         let target = unique_path(folder, &stem, extension);
 
         fs::write(&target, &bytes)
-            .map_err(|e| format!("Cannot write {}: {}", target.display(), e))?;
+            .map_err(|e| crate::tr!(
+                en: format!("Cannot write {}: {}", target.display(), e),
+                pt: format!("Não foi possível gravar {}: {}", target.display(), e),
+            ))?;
 
         known_files.push(target.clone());
         saved.push(target);

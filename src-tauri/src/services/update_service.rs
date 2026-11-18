@@ -74,7 +74,10 @@ pub async fn check_for_updates(app: &AppHandle) -> Result<UpdateInfo, String> {
             let _ = set_taskbar_transparency(&exit_app, false);
         })
         .build()
-        .map_err(|e| format!("The updater is not configured: {}", e))?
+        .map_err(|e| crate::tr!(
+            en: format!("The updater is not configured: {}", e),
+            pt: format!("O atualizador não está configurado: {}", e),
+        ))?
         .check()
         .await
         .map_err(describe_error)?;
@@ -110,7 +113,10 @@ pub async fn install_update(app: &AppHandle) -> Result<(), String> {
     {
         let mut installing = state.installing.lock().unwrap();
         if *installing {
-            return Err("The update is already being installed.".to_string());
+            return Err(crate::tr!(
+                en: "The update is already being installed.",
+                pt: "A atualização já está sendo instalada.",
+            ));
         }
         *installing = true;
     }
@@ -130,7 +136,7 @@ async fn download_and_install(app: &AppHandle) -> Result<(), String> {
         .lock()
         .unwrap()
         .clone()
-        .ok_or_else(|| "You're already on the latest version.".to_string())?;
+        .ok_or_else(|| crate::tr!(en: "You're already on the latest version.", pt: "Você já está na versão mais recente."))?;
 
     let mut downloaded = 0u64;
     let bytes = update
@@ -142,9 +148,15 @@ async fn download_and_install(app: &AppHandle) -> Result<(), String> {
             || {},
         )
         .await
-        .map_err(|e| format!("Could not download the update: {}", e))?;
+        .map_err(|e| crate::tr!(
+            en: format!("Could not download the update: {}", e),
+            pt: format!("Não foi possível baixar a atualização: {}", e),
+        ))?;
 
-    update.install(bytes).map_err(|e| format!("Could not install the update: {}", e))
+    update.install(bytes).map_err(|e| crate::tr!(
+        en: format!("Could not install the update: {}", e),
+        pt: format!("Não foi possível instalar a atualização: {}", e),
+    ))
 }
 
 fn release_url(version: &str) -> String {
@@ -154,11 +166,20 @@ fn release_url(version: &str) -> String {
 fn describe_error(error: tauri_plugin_updater::Error) -> String {
     let message = error.to_string();
     if message.contains("404") {
-        "No update information was published for the latest release yet.".to_string()
+        crate::tr!(
+            en: "No update information was published for the latest release yet.",
+            pt: "Ainda não há informações de atualização publicadas para a versão mais recente.",
+        )
     } else if message.contains("403") || message.contains("429") {
-        "GitHub's request limit was reached. Try again in a while.".to_string()
+        crate::tr!(
+            en: "GitHub's request limit was reached. Try again in a while.",
+            pt: "O limite de pedidos do GitHub foi atingido. Tente de novo daqui a pouco.",
+        )
     } else {
-        format!("Could not check for updates: {}", message)
+        crate::tr!(
+            en: format!("Could not check for updates: {}", message),
+            pt: format!("Não foi possível procurar atualizações: {}", message),
+        )
     }
 }
 

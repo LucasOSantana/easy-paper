@@ -10,7 +10,10 @@ const SERVICE: &str = "easy-paper";
 
 fn entry(provider: StockProvider) -> Result<Entry, String> {
     Entry::new(SERVICE, provider.id())
-        .map_err(|e| format!("Cannot access Windows Credential Manager: {}", e))
+        .map_err(|e| crate::tr!(
+            en: format!("Cannot access Windows Credential Manager: {}", e),
+            pt: format!("Não foi possível acessar o Gerenciador de Credenciais do Windows: {}", e),
+        ))
 }
 
 pub fn get_api_key(provider: StockProvider) -> Option<String> {
@@ -24,12 +27,18 @@ pub fn get_api_key(provider: StockProvider) -> Option<String> {
 pub fn set_api_key(provider: StockProvider, key: &str) -> Result<(), String> {
     entry(provider)?
         .set_password(key)
-        .map_err(|e| format!("Cannot save the key in Windows Credential Manager: {}", e))
+        .map_err(|e| crate::tr!(
+            en: format!("Cannot save the key in Windows Credential Manager: {}", e),
+            pt: format!("Não foi possível salvar a chave no Gerenciador de Credenciais do Windows: {}", e),
+        ))
 }
 
 pub fn delete_api_key(provider: StockProvider) -> Result<(), String> {
     match entry(provider)?.delete_credential() {
         Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
-        Err(e) => Err(format!("Cannot remove the key from Windows Credential Manager: {}", e)),
+        Err(e) => Err(crate::tr!(
+            en: format!("Cannot remove the key from Windows Credential Manager: {}", e),
+            pt: format!("Não foi possível remover a chave do Gerenciador de Credenciais do Windows: {}", e),
+        )),
     }
 }

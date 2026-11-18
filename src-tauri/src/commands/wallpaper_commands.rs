@@ -3,6 +3,7 @@ use crate::models::WallpaperImageItem;
 use crate::services::config_service::get_images_directory;
 use crate::services::thumbnail_service::{get_wallpaper_images_from_folder, thumbnail_cache_dir};
 use crate::services::rotation_service::reset_rotation_timer;
+use crate::state::ConfigState;
 use crate::services::wallpaper_service::set_desktop_wallpaper;
 
 #[tauri::command]
@@ -13,7 +14,8 @@ pub fn get_images(app: tauri::AppHandle) -> Vec<WallpaperImageItem> {
         .asset_protocol_scope()
         .allow_directory(thumbnail_cache_dir(&folder_path), false);
 
-    get_wallpaper_images_from_folder(&folder_path)
+    let config = app.state::<ConfigState>().0.lock().unwrap().clone();
+    get_wallpaper_images_from_folder(&folder_path, |name| config.is_favorite(name))
 }
 
 #[tauri::command]

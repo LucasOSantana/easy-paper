@@ -34,7 +34,7 @@ pub fn download(url: &str, folder: &Path) -> Result<PathBuf, String> {
         .strip_prefix(IMAGE_HOST)
         .and_then(|path| path.rsplit('/').next())
         .filter(|name| !name.is_empty() && !name.contains(['\\', ':']) && !name.starts_with('.'))
-        .ok_or("Invalid Wallhaven image URL")?;
+        .ok_or_else(|| crate::tr!(en: "Invalid Wallhaven image URL", pt: "URL de imagem do Wallhaven inválida"))?;
 
     let target = folder.join(file_name);
     if target.exists() {
@@ -47,7 +47,13 @@ pub fn download(url: &str, folder: &Path) -> Result<PathBuf, String> {
 
 fn describe_error(error: ureq::Error) -> String {
     match error {
-        ureq::Error::StatusCode(429) => "Wallhaven rate limit reached. Try again in a minute.".to_string(),
-        error => format!("Wallhaven request failed: {}", error),
+        ureq::Error::StatusCode(429) => crate::tr!(
+            en: "Wallhaven rate limit reached. Try again in a minute.",
+            pt: "Limite de pedidos do Wallhaven atingido. Tente de novo em um minuto.",
+        ),
+        error => crate::tr!(
+            en: format!("Wallhaven request failed: {}", error),
+            pt: format!("O pedido ao Wallhaven falhou: {}", error),
+        ),
     }
 }

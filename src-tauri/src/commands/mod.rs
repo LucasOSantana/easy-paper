@@ -7,6 +7,9 @@ pub mod wallhaven_commands;
 pub mod rotation_commands;
 pub mod stock_commands;
 pub mod update_commands;
+pub mod library_commands;
+pub mod sync_commands;
+pub mod language_commands;
 
 pub use config_commands::*;
 pub use wallpaper_commands::*;
@@ -17,3 +20,6 @@ pub use wallhaven_commands::*;
 pub use rotation_commands::*;
 pub use stock_commands::*;
 pub use update_commands::*;
+pub use library_commands::*;
+pub use sync_commands::*;
+pub use language_commands::*;

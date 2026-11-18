@@ -4,12 +4,14 @@ import { useAppSettings } from "../../hooks/useAppSettings";
 import { createTabsRegistry } from "./config/tabsRegistry";
 import { SettingsSidebar } from "./components/SettingsSidebar";
 import { FeedbackToast } from "./components/FeedbackToast";
+import { useI18n } from "../../i18n/I18nProvider";
 import "./settings.css";
 
 export default function SettingsWindow() {
   const [activeTabId, setActiveTabId] = useState<TabId>("wallpapers");
   const settings = useAppSettings();
-  const tabs = createTabsRegistry(settings);
+  const { m } = useI18n();
+  const tabs = createTabsRegistry(settings, m);
 
   // Close window on Escape key
   useEffect(() => {

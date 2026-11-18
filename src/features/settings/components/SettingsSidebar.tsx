@@ -1,5 +1,6 @@
 import { TabDefinition, TabId } from "../../../types/settings";
 import { UpdateFooter } from "./UpdateFooter";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 interface SettingsSidebarProps {
   tabs: TabDefinition[];
@@ -14,6 +15,8 @@ export function SettingsSidebar({
   onSelectTab,
   onFeedback,
 }: SettingsSidebarProps) {
+  const { m } = useI18n();
+
   return (
     <aside className="settings-sidebar">
       {/* Brand Header */}
@@ -33,11 +36,11 @@ export function SettingsSidebar({
         </svg>
         <div className="sidebar-brand-text">
           <span className="sidebar-brand-title">Easy Paper</span>
-          <span className="sidebar-brand-sub">Settings</span>
+          <span className="sidebar-brand-sub">{m.settings.sidebar.subtitle}</span>
         </div>
       </div>
 
-      <nav className="sidebar-nav" aria-label="Settings sections">
+      <nav className="sidebar-nav" aria-label={m.settings.sidebar.sectionsLabel}>
         {tabs.map((tab, index) => {
           const isActive = tab.id === activeTabId;
           const isDisabled = Boolean(tab.disabled);
@@ -51,7 +54,7 @@ export function SettingsSidebar({
               onClick={() => !isDisabled && onSelectTab(tab.id)}
               disabled={isDisabled}
               aria-current={isActive ? "page" : undefined}
-              title={isDisabled ? "Feature coming soon" : tab.label}
+              title={isDisabled ? m.settings.sidebar.comingSoon : tab.label}
             >
               <span className="tab-frame-number">{String(index + 1).padStart(2, "0")}</span>
               <span className="tab-label">{tab.label}</span>

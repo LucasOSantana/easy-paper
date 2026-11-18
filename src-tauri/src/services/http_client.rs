@@ -37,7 +37,10 @@ pub fn download_to_file(
 
     if let Err(e) = saved {
         let _ = fs::remove_file(&partial);
-        return Err(format!("Failed to save wallpaper: {}", e));
+        return Err(crate::tr!(
+            en: format!("Could not save the wallpaper: {}", e),
+            pt: format!("Não foi possível salvar o papel de parede: {}", e),
+        ));
     }
 
     Ok(())

@@ -12,10 +12,19 @@ pub enum WallpaperServiceError {
 impl fmt::Display for WallpaperServiceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::FileNotFound => write!(f, "Specified wallpaper image was not found"),
-            Self::UnsupportedPlatform => write!(f, "Setting desktop wallpaper is unsupported on this operating system"),
+            Self::FileNotFound => f.write_str(&crate::tr!(
+                en: "The wallpaper image was not found.",
+                pt: "A imagem do papel de parede não foi encontrada.",
+            )),
+            Self::UnsupportedPlatform => f.write_str(&crate::tr!(
+                en: "Changing the wallpaper is not supported on this system.",
+                pt: "Trocar o papel de parede não é suportado neste sistema.",
+            )),
             #[cfg(target_os = "windows")]
-            Self::Windows(err) => write!(f, "Windows desktop wallpaper API error: {}", err),
+            Self::Windows(err) => f.write_str(&crate::tr!(
+                en: format!("Windows could not change the wallpaper: {}", err),
+                pt: format!("O Windows não conseguiu trocar o papel de parede: {}", err),
+            )),
         }
     }
 }

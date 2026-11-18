@@ -1,4 +1,5 @@
 import { useShortcutRecorder } from "../../../../hooks/useShortcutRecorder";
+import { useI18n } from "../../../../i18n/I18nProvider";
 
 interface ShortcutSectionProps {
   currentShortcut: string;
@@ -13,6 +14,9 @@ export function ShortcutSection({
     useShortcutRecorder({
       onShortcutCaptured: onUpdateShortcut,
     });
+
+  const { m } = useI18n();
+  const t = m.settings.wallpapers.shortcut;
 
   const renderKeycaps = (shortcutStr: string) => {
     if (!shortcutStr) return null;
@@ -41,10 +45,8 @@ export function ShortcutSection({
           </svg>
         </div>
         <div className="card-headings">
-          <h3 className="card-main-title">Global Invocation Shortcut</h3>
-          <p className="card-description">
-            Press this key combination from anywhere in Windows to toggle the wallpaper carousel.
-          </p>
+          <h3 className="card-main-title">{t.title}</h3>
+          <p className="card-description">{t.description}</p>
         </div>
       </div>
 
@@ -55,7 +57,7 @@ export function ShortcutSection({
             <span>
               {previewKeys.length > 0
                 ? previewKeys.join(" + ")
-                : "Press desired keys on your keyboard... (Esc to cancel)"}
+                : t.recordingHint}
             </span>
           </div>
         ) : (
@@ -65,14 +67,14 @@ export function ShortcutSection({
         <div>
           {isRecording ? (
             <button className="btn-secondary" onClick={cancelRecording} type="button">
-              Cancel
+              {m.common.cancel}
             </button>
           ) : (
             <button className="btn-primary" onClick={startRecording} type="button">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
-              <span>Record Shortcut</span>
+              <span>{t.record}</span>
             </button>
           )}
         </div>

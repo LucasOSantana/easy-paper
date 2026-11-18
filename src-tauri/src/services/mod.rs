@@ -12,3 +12,5 @@ pub mod stock_service;
 pub mod update_service;
 pub mod rotation_service;
 pub mod backup_service;
+pub mod library_service;
+pub mod sync_service;

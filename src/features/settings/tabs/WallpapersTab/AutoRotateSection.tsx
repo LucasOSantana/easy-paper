@@ -6,30 +6,11 @@ import {
   MIN_ROTATION_INTERVAL_MINUTES,
   RotationOrder,
 } from "../../../../types/settings";
+import { useI18n } from "../../../../i18n/I18nProvider";
 
 const PRESET_MINUTES = [15, 30, 60, 180, 360, 720, 1440];
 
-const ORDER_OPTIONS: { value: RotationOrder; label: string; hint: string }[] = [
-  {
-    value: "shuffle",
-    label: "Shuffle",
-    hint: "Shows every wallpaper in the folder before repeating any.",
-  },
-  {
-    value: "random",
-    label: "Random",
-    hint: "Picks any wallpaper each time, so some may come back sooner.",
-  },
-];
-
 type IntervalUnit = "minutes" | "hours";
-
-function presetLabel(minutes: number): string {
-  if (minutes < 60) return `Every ${minutes} minutes`;
-  if (minutes === 60) return "Every hour";
-  if (minutes === 1440) return "Every day";
-  return `Every ${minutes / 60} hours`;
-}
 
 function splitInterval(minutes: number): { amount: string; unit: IntervalUnit } {
   return minutes % 60 === 0
@@ -39,11 +20,26 @@ function splitInterval(minutes: number): { amount: string; unit: IntervalUnit } 
 
 interface AutoRotateSectionProps {
   value: AutoRotateConfig;
+  favoritesCount: number;
   disabled: boolean;
   onChange: (next: AutoRotateConfig) => Promise<boolean>;
 }
 
-export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSectionProps) {
+export function AutoRotateSection({ value, favoritesCount, disabled, onChange }: AutoRotateSectionProps) {
+  const { m } = useI18n();
+  const t = m.settings.wallpapers.rotation;
+
+  const orderOptions: { value: RotationOrder; label: string; hint: string }[] = [
+    { value: "shuffle", label: t.shuffle, hint: t.shuffleHint },
+    { value: "random", label: t.random, hint: t.randomHint },
+  ];
+
+  const poolHint = !value.favorites_only
+    ? t.poolAll
+    : favoritesCount === 0
+      ? t.poolNoFavorites
+      : t.poolFavorites(favoritesCount);
+
   const savedIsCustom =
     value.trigger === "interval" && !PRESET_MINUTES.includes(value.interval_minutes);
 
@@ -94,11 +90,7 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
       draftMinutes < MIN_ROTATION_INTERVAL_MINUTES ||
       draftMinutes > MAX_ROTATION_INTERVAL_MINUTES
     ) {
-      setCustomError(
-        `Choose between ${MIN_ROTATION_INTERVAL_MINUTES} minutes and ${
-          MAX_ROTATION_INTERVAL_MINUTES / 1440
-        } days.`
-      );
+      setCustomError(t.rangeError(MIN_ROTATION_INTERVAL_MINUTES, MAX_ROTATION_INTERVAL_MINUTES / 1440));
       return;
     }
 
@@ -106,7 +98,7 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
     await onChange({ ...value, trigger: "interval", interval_minutes: draftMinutes });
   };
 
-  const activeOrder = ORDER_OPTIONS.find((option) => option.value === value.order) ?? ORDER_OPTIONS[0];
+  const activeOrder = orderOptions.find((option) => option.value === value.order) ?? orderOptions[0];
 
   return (
     <section className="feature-card">
@@ -120,14 +112,12 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
           </svg>
         </div>
         <div className="card-headings">
-          <h3 className="card-main-title">Automatic Rotation</h3>
-          <p className="card-description">
-            Change the wallpaper on its own, picking from your folder. Each monitor gets a different image.
-          </p>
+          <h3 className="card-main-title">{t.title}</h3>
+          <p className="card-description">{t.description}</p>
         </div>
         <ToggleSwitch
           checked={value.enabled}
-          label="Automatic rotation"
+          label={t.toggleLabel}
           disabled={disabled}
           onChange={(enabled) => onChange({ ...value, enabled })}
         />
@@ -137,7 +127,7 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
         <div className="rotation-body">
           <div className="setting-row">
             <label className="setting-label" htmlFor="rotation-schedule">
-              Change
+              {t.changeLabel}
             </label>
             <div className="setting-control">
               <div className="rotation-schedule-row">
@@ -148,22 +138,22 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
                   disabled={disabled}
                   onChange={(e) => handleScheduleChange(e.target.value)}
                 >
-                  <option value="on_startup">Every time Windows starts</option>
+                  <option value="on_startup">{t.onStartup}</option>
                   {PRESET_MINUTES.map((minutes) => (
                     <option key={minutes} value={String(minutes)}>
-                      {presetLabel(minutes)}
+                      {t.preset(minutes)}
                     </option>
                   ))}
-                  <option value="custom">Custom interval…</option>
+                  <option value="custom">{t.custom}</option>
                 </select>
 
                 {customOpen && (
                   <form className="custom-interval" onSubmit={handleCustomSubmit}>
-                    <span className="custom-interval-prefix">Every</span>
+                    <span className="custom-interval-prefix">{t.every}</span>
                     <input
                       type="number"
                       className="folder-path-field interval-field"
-                      aria-label="Interval amount"
+                      aria-label={t.amountLabel}
                       min={1}
                       step={1}
                       value={draft.amount}
@@ -175,7 +165,7 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
                     />
                     <select
                       className="settings-select"
-                      aria-label="Interval unit"
+                      aria-label={t.unitLabel}
                       value={draft.unit}
                       disabled={disabled}
                       onChange={(e) => {
@@ -183,15 +173,15 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
                         setDraft({ ...draft, unit: e.target.value as IntervalUnit });
                       }}
                     >
-                      <option value="minutes">minutes</option>
-                      <option value="hours">hours</option>
+                      <option value="minutes">{t.minutes}</option>
+                      <option value="hours">{t.hours}</option>
                     </select>
                     <button
                       className="btn-secondary interval-apply"
                       type="submit"
                       disabled={disabled || draftMatchesSaved}
                     >
-                      {draftMatchesSaved ? "Saved" : "Apply"}
+                      {draftMatchesSaved ? t.saved : t.apply}
                     </button>
                   </form>
                 )}
@@ -200,19 +190,45 @@ export function AutoRotateSection({ value, disabled, onChange }: AutoRotateSecti
               <p className={`setting-footnote ${customError ? "error" : ""}`} role={customError ? "alert" : undefined}>
                 {customError ??
                   (value.trigger === "on_startup" && !customOpen
-                    ? "Changes once each time you sign in to Windows after turning the PC on or restarting."
-                    : "Time asleep counts too, so it changes on wake if the interval has passed. Starts over when the PC is turned on or you pick a wallpaper yourself.")}
+                    ? t.startupNote
+                    : t.intervalNote)}
               </p>
             </div>
           </div>
 
           <div className="setting-row">
+            <span className="setting-label" id="rotation-pool-label">
+              {t.fromLabel}
+            </span>
+            <div className="setting-control">
+              <div className="segmented" role="radiogroup" aria-labelledby="rotation-pool-label">
+                {[
+                  { favoritesOnly: false, label: t.allWallpapers },
+                  { favoritesOnly: true, label: t.favoritesOnly },
+                ].map((option) => (
+                  <label key={String(option.favoritesOnly)} className="segmented-option">
+                    <input
+                      type="radio"
+                      name="rotation-pool"
+                      checked={value.favorites_only === option.favoritesOnly}
+                      disabled={disabled}
+                      onChange={() => onChange({ ...value, favorites_only: option.favoritesOnly })}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="setting-footnote">{poolHint}</p>
+            </div>
+          </div>
+
+          <div className="setting-row">
             <span className="setting-label" id="rotation-order-label">
-              Order
+              {t.orderLabel}
             </span>
             <div className="setting-control">
               <div className="segmented" role="radiogroup" aria-labelledby="rotation-order-label">
-                {ORDER_OPTIONS.map((option) => (
+                {orderOptions.map((option) => (
                   <label key={option.value} className="segmented-option">
                     <input
                       type="radio"

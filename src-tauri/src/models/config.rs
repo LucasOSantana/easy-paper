@@ -29,6 +29,9 @@ pub struct AutoRotateConfig {
     pub trigger: RotationTrigger,
     pub interval_minutes: u32,
     pub order: RotationOrder,
+    /// Only rotate through favorite wallpapers (falls back to the whole
+    /// folder while there are no favorites).
+    pub favorites_only: bool,
 }
 
 impl Default for AutoRotateConfig {
@@ -38,6 +41,7 @@ impl Default for AutoRotateConfig {
             trigger: RotationTrigger::Interval,
             interval_minutes: 180,
             order: RotationOrder::Shuffle,
+            favorites_only: false,
         }
     }
 }
@@ -54,6 +58,36 @@ pub struct AppConfig {
     /// attempted, so it never runs again.
     #[serde(default)]
     pub original_wallpaper_saved: bool,
+    /// File names (inside `images_path`) marked as favorite.
+    #[serde(default)]
+    pub favorites: Vec<String>,
+    #[serde(default)]
+    pub sync: SyncConfig,
+    /// Unix time (ms) of the last change to the settings that are synced
+    /// between PCs. Used to decide which side wins when syncing.
+    #[serde(default)]
+    pub settings_updated_at: u64,
+    /// Interface language: "system" (follow Windows), "en" or "pt-BR".
+    #[serde(default = "default_language")]
+    pub language: String,
+}
+
+pub fn default_language() -> String {
+    "system".to_string()
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SyncConfig {
+    /// Folder that holds the shared sync file (usually inside OneDrive,
+    /// Dropbox or Google Drive). Empty when sync is off.
+    pub folder: String,
+}
+
+impl AppConfig {
+    pub fn is_favorite(&self, file_name: &str) -> bool {
+        self.favorites.iter().any(|name| name.eq_ignore_ascii_case(file_name))
+    }
 }
 
 impl Default for AppConfig {
@@ -64,6 +98,10 @@ impl Default for AppConfig {
             taskbar_transparent: false,
             auto_rotate: AutoRotateConfig::default(),
             original_wallpaper_saved: false,
+            favorites: Vec::new(),
+            sync: SyncConfig::default(),
+            settings_updated_at: 0,
+            language: default_language(),
         }
     }
 }

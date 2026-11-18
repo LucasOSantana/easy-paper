@@ -1,11 +1,6 @@
 import { StockFilters } from "../../../../../hooks/useStockSearch";
 import { StockOrientation, StockProviderInfo } from "../../../../../types/stock";
-
-const ORIENTATION_OPTIONS: { value: StockOrientation; label: string }[] = [
-  { value: "landscape", label: "Landscape" },
-  { value: "portrait", label: "Portrait" },
-  { value: "", label: "Any orientation" },
-];
+import { useI18n } from "../../../../../i18n/I18nProvider";
 
 interface StockSearchSectionProps {
   info: StockProviderInfo;
@@ -16,10 +11,14 @@ interface StockSearchSectionProps {
 }
 
 export function StockSearchSection({ info, filters, loading, onChange, onSearch }: StockSearchSectionProps) {
-  const browseHint =
-    info.id === "unsplash"
-      ? "Leave it empty to browse the Unsplash Wallpapers topic."
-      : "Leave it empty to browse curated photos (orientation applies to searches only).";
+  const { m } = useI18n();
+  const t = m.settings.online.stock;
+  const browseHint = info.id === "unsplash" ? t.browseUnsplash : t.browsePexels;
+  const orientationOptions: { value: StockOrientation; label: string }[] = [
+    { value: "landscape", label: t.landscape },
+    { value: "portrait", label: t.portrait },
+    { value: "", label: t.anyOrientation },
+  ];
 
   return (
     <section className="feature-card">
@@ -31,9 +30,9 @@ export function StockSearchSection({ info, filters, loading, onChange, onSearch 
           </svg>
         </div>
         <div className="card-headings">
-          <h3 className="card-main-title">Search</h3>
+          <h3 className="card-main-title">{m.common.search}</h3>
           <p className="card-description">
-            Search photos on {info.name.toLowerCase()}.com. {browseHint}
+            {t.description(`${info.name.toLowerCase()}.com`)} {browseHint}
           </p>
         </div>
       </div>
@@ -48,24 +47,24 @@ export function StockSearchSection({ info, filters, loading, onChange, onSearch 
         <input
           type="search"
           className="folder-path-field search-query-field"
-          placeholder="Search keywords..."
+          placeholder={t.placeholder}
           value={filters.query}
           onChange={(e) => onChange({ query: e.target.value }, false)}
         />
         <button className="btn-primary" type="submit" disabled={loading}>
-          Search
+          {m.common.search}
         </button>
       </form>
 
       <div className="search-filters-row">
         <select
           className="settings-select"
-          aria-label="Orientation"
+          aria-label={t.orientationLabel}
           value={filters.orientation}
           onChange={(e) => onChange({ orientation: e.target.value as StockOrientation }, true)}
         >
-          {ORIENTATION_OPTIONS.map((option) => (
-            <option key={option.label} value={option.value}>
+          {orientationOptions.map((option) => (
+            <option key={option.value || "any"} value={option.value}>
               {option.label}
             </option>
           ))}

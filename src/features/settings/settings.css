@@ -725,6 +725,111 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Backup & Sync                                                      */
+/* ------------------------------------------------------------------ */
+
+.backup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 44px; /* icon badge (32) + gap (12) */
+}
+
+.backup-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background-color: var(--developer-well);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-md);
+}
+
+.backup-option-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.backup-option-title,
+.backup-result-title {
+  font-family: var(--type-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--emulsion);
+}
+
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.backup-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background-color: var(--fixed-wash);
+  border: 1px solid var(--fixed-edge);
+  border-radius: var(--radius-md);
+}
+
+.backup-result-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.backup-result-path {
+  font-family: var(--type-mono);
+  font-size: 11px;
+  color: var(--emulsion-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-secondary.backup-result-open {
+  height: 30px;
+  font-size: 13px;
+}
+
+.sync-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-left: 44px;
+  padding: 12px;
+  background-color: var(--safelight-wash);
+  border: 1px solid var(--safelight-edge);
+  border-radius: var(--radius-md);
+}
+
+.sync-choice-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--emulsion-2);
+  text-wrap: pretty;
+}
+
+.sync-choice-text strong {
+  color: var(--emulsion);
+  font-weight: 600;
+}
+
+.sync-note {
+  margin-top: 16px;
+  padding-top: 12px;
+  padding-left: 44px;
+  border-top: 1px solid var(--edge-soft);
+}
+
+/* ------------------------------------------------------------------ */
 /* Online Sources                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -1143,4 +1248,9 @@
   to {
     opacity: 1;
   }
+}
+
+.settings-select.language-select {
+  align-self: flex-start;
+  min-width: 260px;
 }

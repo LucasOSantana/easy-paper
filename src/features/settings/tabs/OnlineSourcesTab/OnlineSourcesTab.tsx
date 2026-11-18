@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { WallhavenSource } from "./wallhaven/WallhavenSource";
 import { StockSource } from "./stock/StockSource";
+import { useI18n } from "../../../../i18n/I18nProvider";
 
 type FeedbackHandler = (type: "success" | "error", message: string) => void;
 
@@ -35,15 +36,14 @@ interface OnlineSourcesTabProps {
 export function OnlineSourcesTab({ onFeedback }: OnlineSourcesTabProps) {
   const [activeSourceId, setActiveSourceId] = useState(SOURCES[0].id);
   const activeSource = SOURCES.find((source) => source.id === activeSourceId) ?? SOURCES[0];
+  const { m } = useI18n();
 
   return (
     <div className="tab-pane">
       <div className="content-header-block">
-        <span className="content-eyebrow">Frame 03</span>
-        <h2 className="content-header-title">Online Sources</h2>
-        <p className="content-header-subtitle">
-          Find wallpapers online and save them straight into your wallpaper folder. Wallhaven works right away; Unsplash and Pexels use your own free API key.
-        </p>
+        <span className="content-eyebrow">{m.settings.frame(3)}</span>
+        <h2 className="content-header-title">{m.settings.online.title}</h2>
+        <p className="content-header-subtitle">{m.settings.online.subtitle}</p>
       </div>
 
       <div className="source-tabs" role="tablist">

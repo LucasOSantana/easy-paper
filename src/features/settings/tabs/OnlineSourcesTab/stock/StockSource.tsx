@@ -5,6 +5,7 @@ import { STOCK_PROVIDERS, StockProvider } from "../../../../../types/stock";
 import { ApiKeySetup } from "./ApiKeySetup";
 import { StockSearchSection } from "./StockSearchSection";
 import { StockResults } from "./StockResults";
+import { useI18n } from "../../../../../i18n/I18nProvider";
 
 interface StockSourceProps {
   provider: StockProvider;
@@ -16,6 +17,8 @@ export function StockSource({ provider, onFeedback }: StockSourceProps) {
   const info = STOCK_PROVIDERS[provider];
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [replacingKey, setReplacingKey] = useState(false);
+  const { m } = useI18n();
+  const t = m.settings.online.stock;
 
   useEffect(() => {
     let cancelled = false;
@@ -40,15 +43,15 @@ export function StockSource({ provider, onFeedback }: StockSourceProps) {
     try {
       await TauriService.removeStockApiKey(provider);
       setHasKey(false);
-      onFeedback("success", `${info.name} key removed from this PC.`);
+      onFeedback("success", t.keyRemoved(info.name));
     } catch (err) {
       console.error(err);
-      onFeedback("error", typeof err === "string" ? err : "Could not remove the key.");
+      onFeedback("error", typeof err === "string" ? err : t.removeFailed);
     }
   };
 
   if (hasKey === null) {
-    return <p className="results-empty">Loading…</p>;
+    return <p className="results-empty">{m.common.loading}</p>;
   }
 
   if (!ready) {
@@ -85,12 +88,12 @@ export function StockSource({ provider, onFeedback }: StockSourceProps) {
       />
 
       <div className="key-footer">
-        <span>Using your {info.name} key</span>
+        <span>{t.usingKey(info.name)}</span>
         <button className="link-button" type="button" onClick={() => setReplacingKey(true)}>
-          Change key
+          {t.changeKey}
         </button>
         <button className="link-button" type="button" onClick={removeKey}>
-          Remove key
+          {t.removeKey}
         </button>
       </div>
     </>

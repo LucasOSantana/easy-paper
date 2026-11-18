@@ -1,18 +1,9 @@
 import { ToggleSwitch } from "../../../components/ToggleSwitch";
 import { WallhavenFilters } from "../../../../../hooks/useWallhavenSearch";
 import { WallhavenSorting } from "../../../../../types/wallhaven";
-
-const SORTING_OPTIONS: { value: WallhavenSorting; label: string }[] = [
-  { value: "toplist", label: "Top" },
-  { value: "relevance", label: "Relevance" },
-  { value: "date_added", label: "Latest" },
-  { value: "views", label: "Most viewed" },
-  { value: "favorites", label: "Most favorited" },
-  { value: "random", label: "Random" },
-];
+import { useI18n } from "../../../../../i18n/I18nProvider";
 
 const RATIO_OPTIONS = [
-  { value: "", label: "Any ratio" },
   { value: "16x9", label: "16:9" },
   { value: "16x10", label: "16:10" },
   { value: "21x9", label: "21:9" },
@@ -34,6 +25,18 @@ export function WallhavenSearchSection({
   onChange,
   onSearch,
 }: WallhavenSearchSectionProps) {
+  const { m } = useI18n();
+  const t = m.settings.online.wallhaven;
+  const sortingOptions: { value: WallhavenSorting; label: string }[] = [
+    { value: "toplist", label: t.sortTop },
+    { value: "relevance", label: t.sortRelevance },
+    { value: "date_added", label: t.sortLatest },
+    { value: "views", label: t.sortViews },
+    { value: "favorites", label: t.sortFavorites },
+    { value: "random", label: t.sortRandom },
+  ];
+  const ratioOptions = [{ value: "", label: t.anyRatio }, ...RATIO_OPTIONS];
+
   return (
     <section className="feature-card">
       <div className="card-title-row">
@@ -44,10 +47,8 @@ export function WallhavenSearchSection({
           </svg>
         </div>
         <div className="card-headings">
-          <h3 className="card-main-title">Search</h3>
-          <p className="card-description">
-            Search safe-for-work wallpapers from wallhaven.cc.
-          </p>
+          <h3 className="card-main-title">{m.common.search}</h3>
+          <p className="card-description">{t.description}</p>
         </div>
       </div>
 
@@ -61,12 +62,12 @@ export function WallhavenSearchSection({
         <input
           type="search"
           className="folder-path-field search-query-field"
-          placeholder="Search tags or keywords..."
+          placeholder={t.placeholder}
           value={filters.query}
           onChange={(e) => onChange({ query: e.target.value }, false)}
         />
         <button className="btn-primary" type="submit" disabled={loading}>
-          Search
+          {m.common.search}
         </button>
       </form>
 
@@ -76,7 +77,7 @@ export function WallhavenSearchSection({
           value={filters.sorting}
           onChange={(e) => onChange({ sorting: e.target.value as WallhavenSorting }, true)}
         >
-          {SORTING_OPTIONS.map((option) => (
+          {sortingOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -88,7 +89,7 @@ export function WallhavenSearchSection({
           value={filters.ratios}
           onChange={(e) => onChange({ ratios: e.target.value }, true)}
         >
-          {RATIO_OPTIONS.map((option) => (
+          {ratioOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -98,10 +99,10 @@ export function WallhavenSearchSection({
         <label className="search-toggle-label">
           <ToggleSwitch
             checked={filters.match_screen}
-            label="At least my screen resolution"
+            label={t.matchScreen}
             onChange={(matchScreen) => onChange({ match_screen: matchScreen }, true)}
           />
-          <span>At least my screen resolution</span>
+          <span>{t.matchScreen}</span>
         </label>
       </div>
     </section>

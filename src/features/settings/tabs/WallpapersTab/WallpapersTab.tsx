@@ -2,6 +2,7 @@ import { FolderSection } from "./FolderSection";
 import { ShortcutSection } from "./ShortcutSection";
 import { AutoRotateSection } from "./AutoRotateSection";
 import { useAppSettings } from "../../../../hooks/useAppSettings";
+import { useI18n } from "../../../../i18n/I18nProvider";
 
 interface WallpapersTabProps {
   settings: ReturnType<typeof useAppSettings>;
@@ -17,15 +18,15 @@ export function WallpapersTab({ settings }: WallpapersTabProps) {
     autoRotateUpdating,
     openFolderExplorer,
   } = settings;
+  const { m } = useI18n();
+  const t = m.settings.wallpapers;
 
   return (
     <div className="tab-pane">
       <div className="content-header-block">
-        <span className="content-eyebrow">Frame 01</span>
-        <h2 className="content-header-title">Wallpapers & Shortcuts</h2>
-        <p className="content-header-subtitle">
-          Manage your local wallpaper folder, automatic rotation, and the global keyboard shortcut.
-        </p>
+        <span className="content-eyebrow">{m.settings.frame(1)}</span>
+        <h2 className="content-header-title">{t.title}</h2>
+        <p className="content-header-subtitle">{t.subtitle}</p>
       </div>
 
       <FolderSection
@@ -42,6 +43,7 @@ export function WallpapersTab({ settings }: WallpapersTabProps) {
 
       <AutoRotateSection
         value={config.auto_rotate}
+        favoritesCount={config.favorites.length}
         disabled={loading || autoRotateUpdating}
         onChange={changeAutoRotate}
       />

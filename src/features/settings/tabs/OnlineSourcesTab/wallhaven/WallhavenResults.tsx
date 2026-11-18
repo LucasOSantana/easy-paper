@@ -1,5 +1,6 @@
 import { DownloadState } from "../../../../../hooks/useWallhavenSearch";
 import { WallhavenPage, WallhavenWallpaper } from "../../../../../types/wallhaven";
+import { useI18n } from "../../../../../i18n/I18nProvider";
 
 interface WallhavenResultsProps {
   result: WallhavenPage | null;
@@ -16,12 +17,14 @@ export function WallhavenResults({
   onDownload,
   onPageChange,
 }: WallhavenResultsProps) {
+  const { m } = useI18n();
+
   if (!result) {
-    return <p className="results-empty">{loading ? "Searching..." : "No results yet."}</p>;
+    return <p className="results-empty">{loading ? m.common.searching : m.common.noResultsYet}</p>;
   }
 
   if (result.data.length === 0) {
-    return <p className="results-empty">No wallpapers match these filters.</p>;
+    return <p className="results-empty">{m.settings.online.wallhaven.noMatches}</p>;
   }
 
   const { current_page: page, last_page: lastPage } = result.meta;
@@ -29,8 +32,8 @@ export function WallhavenResults({
   return (
     <section className={`results-section ${loading ? "loading" : ""}`}>
       <div className="contact-sheet-header">
-        <span>Contact sheet</span>
-        <span className="contact-sheet-count">{result.data.length} frames</span>
+        <span>{m.common.contactSheet}</span>
+        <span className="contact-sheet-count">{m.settings.online.frames(result.data.length)}</span>
       </div>
 
       <div className="wallpaper-grid">
@@ -52,7 +55,7 @@ export function WallhavenResults({
                   disabled={state !== undefined}
                   onClick={() => onDownload(wallpaper)}
                 >
-                  {state === "done" ? "Saved" : state === "downloading" ? "Saving..." : "Download"}
+                  {state === "done" ? m.common.saved : state === "downloading" ? m.common.saving : m.common.download}
                 </button>
               </div>
             </div>
@@ -67,18 +70,16 @@ export function WallhavenResults({
           disabled={loading || page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
-          Previous
+          {m.common.previous}
         </button>
-        <span>
-          Page {page} of {lastPage}
-        </span>
+        <span>{m.settings.online.pageOf(page, lastPage)}</span>
         <button
           className="btn-secondary"
           type="button"
           disabled={loading || page >= lastPage}
           onClick={() => onPageChange(page + 1)}
         >
-          Next
+          {m.common.next}
         </button>
       </div>
     </section>

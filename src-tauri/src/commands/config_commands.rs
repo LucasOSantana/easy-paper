@@ -2,7 +2,7 @@ use std::str::FromStr;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 use crate::models::AppConfig;
 use crate::state::ConfigState;
-use crate::services::config_service::save_config;
+use crate::services::config_service::modify_config;
 
 #[tauri::command]
 pub fn get_config(config_state: tauri::State<ConfigState>) -> AppConfig {
@@ -18,7 +18,10 @@ pub fn update_config(
 ) -> Result<AppConfig, String> {
     let clean_shortcut = shortcut.trim().to_lowercase();
     let parsed_shortcut = Shortcut::from_str(&clean_shortcut)
-        .map_err(|e| format!("Invalid shortcut syntax: {}", e))?;
+        .map_err(|e| crate::tr!(
+            en: format!("Invalid shortcut: {}", e),
+            pt: format!("Atalho inválido: {}", e),
+        ))?;
 
     let _ = app.global_shortcut().unregister_all();
     if let Err(e) = app.global_shortcut().register(parsed_shortcut) {
@@ -26,22 +29,16 @@ pub fn update_config(
         if let Ok(old_parsed) = Shortcut::from_str(&old_shortcut) {
             let _ = app.global_shortcut().register(old_parsed);
         }
-        return Err(format!("Failed to register shortcut: {}. It might be already in use by another application.", e));
+        return Err(crate::tr!(
+            en: format!("Could not register the shortcut: {}. It may already be in use by another app.", e),
+            pt: format!("Não foi possível registrar o atalho: {}. Talvez outro app já esteja usando ele.", e),
+        ));
     }
 
-    let updated_config = AppConfig {
-        shortcut: clean_shortcut,
-        images_path: images_path.trim().to_string(),
-        ..config_state.0.lock().unwrap().clone()
-    };
-
-    save_config(&app, &updated_config)
-        .map_err(|e| format!("Failed to save configuration to disk: {}", e))?;
-
-    {
-        let mut state = config_state.0.lock().unwrap();
-        *state = updated_config.clone();
-    }
-
-    Ok(updated_config)
+    let images_path = images_path.trim().to_string();
+    modify_config(&app, |config| {
+        config.shortcut = clean_shortcut;
+        config.images_path = images_path;
+        Ok(())
+    })
 }

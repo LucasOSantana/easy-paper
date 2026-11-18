@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { TauriService } from "../services/tauriCommands";
 import { StockOrientation, StockPage, StockPhoto, StockProvider } from "../types/stock";
 import { DownloadState } from "./useWallhavenSearch";
+import { useI18n } from "../i18n/I18nProvider";
 
 type FeedbackHandler = (type: "success" | "error", message: string) => void;
 
@@ -16,6 +17,7 @@ export function useStockSearch(provider: StockProvider, enabled: boolean, onFeed
   const [result, setResult] = useState<StockPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({});
+  const { m } = useI18n();
 
   const search = async (page = 1, searchFilters = filters) => {
     try {
@@ -23,7 +25,7 @@ export function useStockSearch(provider: StockProvider, enabled: boolean, onFeed
       setResult(await TauriService.searchStock({ provider, ...searchFilters, page }));
     } catch (err) {
       console.error(err);
-      onFeedback("error", typeof err === "string" ? err : "Search failed.");
+      onFeedback("error", typeof err === "string" ? err : m.settings.online.stock.searchFailed);
     } finally {
       setLoading(false);
     }
@@ -48,11 +50,11 @@ export function useStockSearch(provider: StockProvider, enabled: boolean, onFeed
     try {
       await TauriService.downloadStock(provider, photo);
       setDownloads((prev) => ({ ...prev, [photo.id]: "done" }));
-      onFeedback("success", "Wallpaper saved to your wallpaper folder.");
+      onFeedback("success", m.common.wallpaperSaved);
     } catch (err) {
       console.error(err);
       setDownloads(({ [photo.id]: _, ...rest }) => rest);
-      onFeedback("error", typeof err === "string" ? err : "Failed to download wallpaper.");
+      onFeedback("error", typeof err === "string" ? err : m.common.downloadFailed);
     }
   };
 

@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AppConfig, AutoRotateConfig, FeedbackState } from "../types/settings";
+import { listen } from "@tauri-apps/api/event";
 import { TauriService } from "../services/tauriCommands";
+import { CONFIG_CHANGED_EVENT } from "../types/sync";
+import { LanguageSetting, useI18n } from "../i18n/I18nProvider";
 
 export function useAppSettings() {
   const [config, setConfig] = useState<AppConfig>({
@@ -12,12 +15,22 @@ export function useAppSettings() {
       trigger: "interval",
       interval_minutes: 180,
       order: "shuffle",
+      favorites_only: false,
     },
+    favorites: [],
+    sync: { folder: "" },
+    settings_updated_at: 0,
+    language: "system",
   });
   const [loading, setLoading] = useState(true);
   const [taskbarUpdating, setTaskbarUpdating] = useState(false);
   const [autoRotateUpdating, setAutoRotateUpdating] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const { m } = useI18n();
+  // Read through a ref so callbacks keep a stable identity across language changes.
+  const messages = useRef(m);
+  messages.current = m;
+  const fb = () => messages.current.settings.feedback;
 
   const showFeedback = useCallback((type: "success" | "error", message: string) => {
     setFeedback({ type, message });
@@ -34,7 +47,7 @@ export function useAppSettings() {
       setConfig(data);
     } catch (err) {
       console.error(err);
-      showFeedback("error", "Failed to load application configuration.");
+      showFeedback("error", fb().loadConfigFailed);
     } finally {
       setLoading(false);
     }
@@ -44,6 +57,14 @@ export function useAppSettings() {
     loadConfig();
   }, [loadConfig]);
 
+  // Stay current with changes made from the tray, a restored backup or sync.
+  useEffect(() => {
+    const unlisten = listen<AppConfig>(CONFIG_CHANGED_EVENT, (event) => setConfig(event.payload));
+    return () => {
+      unlisten.then((stop) => stop());
+    };
+  }, []);
+
   const changeFolder = async () => {
     try {
       const selected = await TauriService.pickFolder();
@@ -51,10 +72,10 @@ export function useAppSettings() {
 
       const updated = await TauriService.updateConfig(config.shortcut, selected.trim());
       setConfig(updated);
-      showFeedback("success", "Wallpaper folder updated successfully.");
+      showFeedback("success", fb().folderUpdated);
     } catch (err) {
       console.error(err);
-      showFeedback("error", typeof err === "string" ? err : "Failed to select folder.");
+      showFeedback("error", typeof err === "string" ? err : fb().folderFailed);
     }
   };
 
@@ -62,11 +83,11 @@ export function useAppSettings() {
     try {
       const updated = await TauriService.updateConfig(newShortcut, config.images_path);
       setConfig(updated);
-      showFeedback("success", `Shortcut updated to "${newShortcut}".`);
+      showFeedback("success", fb().shortcutUpdated(newShortcut));
       return true;
     } catch (err) {
       console.error(err);
-      showFeedback("error", typeof err === "string" ? err : "Unable to register the specified shortcut.");
+      showFeedback("error", typeof err === "string" ? err : fb().shortcutFailed);
       return false;
     }
   };
@@ -78,11 +99,11 @@ export function useAppSettings() {
       setConfig(updated);
       showFeedback(
         "success",
-        transparent ? "Taskbar is now transparent." : "Taskbar restored to the Windows default."
+        transparent ? fb().taskbarOn : fb().taskbarOff
       );
     } catch (err) {
       console.error(err);
-      showFeedback("error", typeof err === "string" ? err : "Unable to update the taskbar.");
+      showFeedback("error", typeof err === "string" ? err : fb().taskbarFailed);
     } finally {
       setTaskbarUpdating(false);
     }
@@ -97,16 +118,27 @@ export function useAppSettings() {
       if (wasEnabled !== settings.enabled) {
         showFeedback(
           "success",
-          settings.enabled ? "Automatic rotation turned on." : "Automatic rotation turned off."
+          settings.enabled ? fb().rotationOn : fb().rotationOff
         );
       }
       return true;
     } catch (err) {
       console.error(err);
-      showFeedback("error", typeof err === "string" ? err : "Unable to update automatic rotation.");
+      showFeedback("error", typeof err === "string" ? err : fb().rotationFailed);
       return false;
     } finally {
       setAutoRotateUpdating(false);
+    }
+  };
+
+  const changeLanguage = async (language: LanguageSetting) => {
+    try {
+      setConfig(await TauriService.setLanguage(language));
+      return true;
+    } catch (err) {
+      console.error(err);
+      showFeedback("error", typeof err === "string" ? err : fb().languageFailed);
+      return false;
     }
   };
 
@@ -138,6 +170,7 @@ export function useAppSettings() {
     changeShortcut,
     changeTaskbarTransparent,
     changeAutoRotate,
+    changeLanguage,
     openFolderExplorer,
     dismissSettings,
   };

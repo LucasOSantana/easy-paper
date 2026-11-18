@@ -5,4 +5,5 @@ pub struct WallpaperImageItem {
     pub name: String,
     pub path: String,
     pub thumbnail: String,
+    pub favorite: bool,
 }

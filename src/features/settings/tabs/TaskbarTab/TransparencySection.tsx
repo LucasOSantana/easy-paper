@@ -1,4 +1,5 @@
 import { ToggleSwitch } from "../../components/ToggleSwitch";
+import { useI18n } from "../../../../i18n/I18nProvider";
 
 interface TransparencySectionProps {
   transparent: boolean;
@@ -11,6 +12,9 @@ export function TransparencySection({
   disabled,
   onChange,
 }: TransparencySectionProps) {
+  const { m } = useI18n();
+  const t = m.settings.taskbar;
+
   return (
     <section className="feature-card">
       <div className="card-title-row card-title-row-flush">
@@ -21,14 +25,12 @@ export function TransparencySection({
           </svg>
         </div>
         <div className="card-headings">
-          <h3 className="card-main-title">Transparent Taskbar</h3>
-          <p className="card-description">
-            Remove the taskbar background so your wallpaper shows through. Icons stay visible.
-          </p>
+          <h3 className="card-main-title">{t.transparentTitle}</h3>
+          <p className="card-description">{t.transparentDescription}</p>
         </div>
         <ToggleSwitch
           checked={transparent}
-          label="Transparent taskbar"
+          label={t.transparentLabel}
           disabled={disabled}
           onChange={onChange}
         />

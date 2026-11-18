@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { TauriService } from "../services/tauriCommands";
 import { WallhavenPage, WallhavenSearch, WallhavenWallpaper } from "../types/wallhaven";
+import { useI18n } from "../i18n/I18nProvider";
 
 export type WallhavenFilters = Omit<WallhavenSearch, "page">;
 export type DownloadState = "downloading" | "done";
@@ -17,6 +18,7 @@ export function useWallhavenSearch(onFeedback: FeedbackHandler) {
   const [result, setResult] = useState<WallhavenPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({});
+  const { m } = useI18n();
 
   const search = async (page = 1, searchFilters = filters) => {
     try {
@@ -24,7 +26,7 @@ export function useWallhavenSearch(onFeedback: FeedbackHandler) {
       setResult(await TauriService.searchWallhaven({ ...searchFilters, page }));
     } catch (err) {
       console.error(err);
-      onFeedback("error", typeof err === "string" ? err : "Wallhaven search failed.");
+      onFeedback("error", typeof err === "string" ? err : m.settings.online.wallhaven.searchFailed);
     } finally {
       setLoading(false);
     }
@@ -45,11 +47,11 @@ export function useWallhavenSearch(onFeedback: FeedbackHandler) {
     try {
       await TauriService.downloadWallhaven(wallpaper.path);
       setDownloads((prev) => ({ ...prev, [wallpaper.id]: "done" }));
-      onFeedback("success", "Wallpaper saved to your wallpaper folder.");
+      onFeedback("success", m.common.wallpaperSaved);
     } catch (err) {
       console.error(err);
       setDownloads(({ [wallpaper.id]: _, ...rest }) => rest);
-      onFeedback("error", typeof err === "string" ? err : "Failed to download wallpaper.");
+      onFeedback("error", typeof err === "string" ? err : m.common.downloadFailed);
     }
   };
 

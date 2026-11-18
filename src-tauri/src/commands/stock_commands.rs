@@ -6,7 +6,11 @@ use crate::services::thumbnail_service::{ensure_thumbnail, thumbnail_cache_dir};
 
 fn require_key(provider: StockProvider) -> Result<String, String> {
     get_api_key(provider).ok_or_else(|| {
-        format!("Add your {} API key in the {} tab first.", provider.name(), provider.name())
+        let name = provider.name();
+        crate::tr!(
+            en: format!("Add your {} API key in the {} tab first.", name, name),
+            pt: format!("Adicione primeiro sua chave de API do {} na aba {}.", name, name),
+        )
     })
 }
 
@@ -21,7 +25,7 @@ pub fn has_stock_api_key(provider: StockProvider) -> bool {
 pub async fn save_stock_api_key(provider: StockProvider, key: String) -> Result<(), String> {
     let key = key.trim().to_string();
     if key.is_empty() {
-        return Err("Paste your API key first.".to_string());
+        return Err(crate::tr!(en: "Paste your API key first.", pt: "Cole sua chave de API primeiro."));
     }
 
     tauri::async_runtime::spawn_blocking(move || {
@@ -29,7 +33,10 @@ pub async fn save_stock_api_key(provider: StockProvider, key: String) -> Result<
         set_api_key(provider, &key)
     })
     .await
-    .map_err(|e| format!("Key check was interrupted: {}", e))?
+    .map_err(|e| crate::tr!(
+        en: format!("Key check was interrupted: {}", e),
+        pt: format!("A verificação da chave foi interrompida: {}", e),
+    ))?
 }
 
 #[tauri::command]
@@ -43,7 +50,10 @@ pub async fn search_stock(search: StockSearch) -> Result<StockPage, String> {
 
     tauri::async_runtime::spawn_blocking(move || stock_service::search(&search, &key))
         .await
-        .map_err(|e| format!("Search was interrupted: {}", e))?
+        .map_err(|e| crate::tr!(
+            en: format!("Search was interrupted: {}", e),
+            pt: format!("A busca foi interrompida: {}", e),
+        ))?
 }
 
 #[tauri::command]
@@ -60,7 +70,10 @@ pub async fn download_stock(
         stock_service::download(provider, &photo, &key, &download_folder)
     })
     .await
-    .map_err(|e| format!("Wallpaper download was interrupted: {}", e))??;
+    .map_err(|e| crate::tr!(
+        en: format!("Wallpaper download was interrupted: {}", e),
+        pt: format!("O download do papel de parede foi interrompido: {}", e),
+    ))??;
 
     tauri::async_runtime::spawn_blocking(move || ensure_thumbnail(&path, &thumbnail_cache_dir(&folder)));
     Ok(())

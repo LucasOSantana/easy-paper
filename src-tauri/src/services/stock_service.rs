@@ -61,7 +61,10 @@ pub fn download(
         StockProvider::Pexels => PEXELS_IMAGES,
     };
     if !photo.download_url.starts_with(image_host) {
-        return Err(format!("Invalid {} image URL", provider.name()));
+        return Err(crate::tr!(
+            en: format!("Invalid {} image URL", provider.name()),
+            pt: format!("URL de imagem do {} inválida", provider.name()),
+        ));
     }
 
     let id: String = photo
@@ -70,7 +73,10 @@ pub fn download(
         .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
         .collect();
     if id.is_empty() {
-        return Err(format!("Invalid {} photo id", provider.name()));
+        return Err(crate::tr!(
+            en: format!("Invalid {} photo id", provider.name()),
+            pt: format!("ID de foto do {} inválido", provider.name()),
+        ));
     }
 
     let target = folder.join(format!("{}-{}.{}", provider.id(), id, file_extension(provider, &photo.download_url)));
@@ -328,20 +334,30 @@ fn file_extension(provider: StockProvider, url: &str) -> &'static str {
 fn describe_error(provider: StockProvider, error: ureq::Error) -> String {
     let name = provider.name();
     match error {
-        ureq::Error::StatusCode(401) => {
-            format!("{} rejected the API key. Check it in the {} tab and try again.", name, name)
-        }
-        ureq::Error::StatusCode(403) if provider == StockProvider::Unsplash => {
-            "Unsplash refused the request. Demo keys allow 50 requests per hour, so wait a bit and try again."
-                .to_string()
-        }
-        ureq::Error::StatusCode(429) => format!("{} rate limit reached. Try again later.", name),
-        error => format!("{} request failed: {}", name, error),
+        ureq::Error::StatusCode(401) => crate::tr!(
+            en: format!("{} rejected the API key. Check it in the {} tab and try again.", name, name),
+            pt: format!("O {} recusou a chave de API. Confira a chave na aba {} e tente de novo.", name, name),
+        ),
+        ureq::Error::StatusCode(403) if provider == StockProvider::Unsplash => crate::tr!(
+            en: "Unsplash refused the request. Demo keys allow 50 requests per hour, so wait a bit and try again.",
+            pt: "O Unsplash recusou o pedido. Chaves de demonstração permitem 50 pedidos por hora; espere um pouco e tente de novo.",
+        ),
+        ureq::Error::StatusCode(429) => crate::tr!(
+            en: format!("{} rate limit reached. Try again later.", name),
+            pt: format!("Limite de pedidos do {} atingido. Tente de novo mais tarde.", name),
+        ),
+        error => crate::tr!(
+            en: format!("{} request failed: {}", name, error),
+            pt: format!("O pedido ao {} falhou: {}", name, error),
+        ),
     }
 }
 
 fn describe_image_error(error: ureq::Error) -> String {
-    format!("Image download failed: {}", error)
+    crate::tr!(
+        en: format!("Image download failed: {}", error),
+        pt: format!("O download da imagem falhou: {}", error),
+    )
 }
 
 #[cfg(test)]

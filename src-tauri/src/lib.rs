@@ -3,6 +3,7 @@ pub mod state;
 pub mod services;
 pub mod commands;
 pub mod tray;
+pub mod i18n;
 
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -19,6 +20,7 @@ use services::autostart_service::enable_windows_autostart;
 use services::rotation_service::{start_rotation_worker, RotationState, AUTOSTART_ARG};
 use services::backup_service::save_original_wallpaper_once;
 use services::update_service::{check_on_startup, UpdateState};
+use services::sync_service::{start_sync_worker, SyncState};
 use services::taskbar_service::{
     apply_saved_taskbar_transparency, set_taskbar_transparency, watch_explorer_restarts,
 };
@@ -33,8 +35,10 @@ pub fn run() {
         .manage(WindowDisplayState(Mutex::new(Instant::now())))
         .manage(RotationState::new())
         .manage(UpdateState::new())
+        .manage(SyncState::new())
         .setup(|app| {
             let app_config = load_config(app);
+            i18n::apply_config(&app_config);
             let initial_shortcut = app_config.shortcut.clone();
             app.manage(ConfigState(Mutex::new(app_config)));
 
@@ -52,6 +56,9 @@ pub fn run() {
 
             // Look for a newer release once per app start.
             check_on_startup(app.handle().clone());
+
+            // Pick up settings changed on other PCs (when sync is on).
+            start_sync_worker(app.handle().clone());
 
             // Back up the user's original wallpaper (first run only) before
             // anything can change it, then start automatic rotation.
@@ -123,7 +130,20 @@ pub fn run() {
             download_stock,
             get_update_status,
             check_for_updates,
-            install_update
+            install_update,
+            set_favorite,
+            delete_wallpaper,
+            reveal_wallpaper,
+            export_backup,
+            import_backup,
+            pick_sync_folder,
+            inspect_sync_folder,
+            connect_sync_folder,
+            disconnect_sync,
+            sync_now,
+            get_sync_status,
+            get_language,
+            set_language
         ])
         .build(tauri::generate_context!())
         .expect("Fatal error while executing Tauri application")

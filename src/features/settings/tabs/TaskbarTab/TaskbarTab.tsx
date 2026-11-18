@@ -1,5 +1,6 @@
 import { TransparencySection } from "./TransparencySection";
 import { useAppSettings } from "../../../../hooks/useAppSettings";
+import { useI18n } from "../../../../i18n/I18nProvider";
 
 interface TaskbarTabProps {
   settings: ReturnType<typeof useAppSettings>;
@@ -7,15 +8,14 @@ interface TaskbarTabProps {
 
 export function TaskbarTab({ settings }: TaskbarTabProps) {
   const { config, loading, taskbarUpdating, changeTaskbarTransparent } = settings;
+  const { m } = useI18n();
 
   return (
     <div className="tab-pane">
       <div className="content-header-block">
-        <span className="content-eyebrow">Frame 02</span>
-        <h2 className="content-header-title">Taskbar</h2>
-        <p className="content-header-subtitle">
-          Customize how the Windows taskbar looks. Changes apply instantly, are restored every time Easy Paper starts, and are undone when it quits.
-        </p>
+        <span className="content-eyebrow">{m.settings.frame(2)}</span>
+        <h2 className="content-header-title">{m.settings.taskbar.title}</h2>
+        <p className="content-header-subtitle">{m.settings.taskbar.subtitle}</p>
       </div>
 
       <TransparencySection

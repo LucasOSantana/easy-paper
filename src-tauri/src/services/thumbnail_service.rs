@@ -28,14 +28,22 @@ pub fn thumbnail_cache_dir(folder_path: &Path) -> PathBuf {
     folder_path.join(".cache").join("thumbnails")
 }
 
-pub fn ensure_thumbnail(path: &Path, cache_dir: &Path) -> PathBuf {
+fn thumbnail_in(path: &Path, cache_dir: &Path) -> PathBuf {
     let safe_stem = path
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("image");
 
-    let thumb_file_name = format!("{}_vthumb.jpg", safe_stem);
-    let thumb_path = cache_dir.join(&thumb_file_name);
+    cache_dir.join(format!("{}_vthumb.jpg", safe_stem))
+}
+
+/// Cached thumbnail of `path`, an image inside `folder_path`.
+pub fn thumbnail_path_for(path: &Path, folder_path: &Path) -> PathBuf {
+    thumbnail_in(path, &thumbnail_cache_dir(folder_path))
+}
+
+pub fn ensure_thumbnail(path: &Path, cache_dir: &Path) -> PathBuf {
+    let thumb_path = thumbnail_in(path, cache_dir);
 
     let should_generate = match (fs::metadata(path), fs::metadata(&thumb_path)) {
         (Ok(src_meta), Ok(thumb_meta)) => {
@@ -75,7 +83,10 @@ pub fn ensure_thumbnail(path: &Path, cache_dir: &Path) -> PathBuf {
     thumb_path
 }
 
-pub fn get_wallpaper_images_from_folder(folder_path: &Path) -> Vec<WallpaperImageItem> {
+pub fn get_wallpaper_images_from_folder(
+    folder_path: &Path,
+    is_favorite: impl Fn(&str) -> bool,
+) -> Vec<WallpaperImageItem> {
     if !folder_path.exists() || !folder_path.is_dir() {
         return Vec::new();
     }
@@ -102,6 +113,7 @@ pub fn get_wallpaper_images_from_folder(folder_path: &Path) -> Vec<WallpaperImag
 
             if thumb_path.exists() {
                 items.push(WallpaperImageItem {
+                    favorite: is_favorite(&file_name),
                     name: file_name,
                     path: path.to_string_lossy().to_string(),
                     thumbnail: thumb_path.to_string_lossy().to_string(),
